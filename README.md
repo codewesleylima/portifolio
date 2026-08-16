@@ -1,17 +1,24 @@
-<div align="center">
+[![Wesley Lima](.github/banner.png)](https://portfolio-wesley-lima.engwesley.workers.dev)
 
-<img src="public/mascot.png" alt="Pixel-art engineer at a CRT workstation" width="180" />
+# 🖥️ Engineering Console — Personal Portfolio
 
-# codewesleylima — engineering console
+---
 
-**Wesley Lima** · Backend Software Engineer II @ Itaú Unibanco · São Paulo, Brazil
+## 📖 Abstract
 
-[![Portfolio](https://img.shields.io/badge/live-portfolio--wesley--lima.engwesley.workers.dev-FF6A1A?style=flat-square&labelColor=080A0C)](https://portfolio-wesley-lima.engwesley.workers.dev)
+A personal portfolio built as a **service health console**. Every public GitHub repository
+renders as a service tile carrying a status strip, last-deploy timestamp, runtime badge and
+topic labels; related repositories fold into project blocks. Colour is semantic rather than
+decorative — a visitor reads the state of the registry the way an on-call engineer reads a
+dashboard.
+
+Repository visibility is read live at request time, so a repository flipped between public
+and private surfaces without waiting for a rebuild.
+
+[![Live](https://img.shields.io/badge/live-portfolio--wesley--lima.engwesley.workers.dev-FF6A1A?style=flat-square&labelColor=080A0C)](https://portfolio-wesley-lima.engwesley.workers.dev)
 [![GitHub](https://img.shields.io/badge/github-codewesleylima-FF6A1A?style=flat-square&labelColor=080A0C&logo=github)](https://github.com/codewesleylima)
 [![LinkedIn](https://img.shields.io/badge/linkedin-wesslima-FF6A1A?style=flat-square&labelColor=080A0C&logo=linkedin)](https://linkedin.com/in/wesslima)
-[![License](https://img.shields.io/badge/license-see%20LICENSE-FF6A1A?style=flat-square&labelColor=080A0C)](LICENSE)
-
-</div>
+[![License](https://img.shields.io/badge/license-LICENSE-FF6A1A?style=flat-square&labelColor=080A0C)](LICENSE)
 
 ---
 
@@ -21,7 +28,7 @@ service tile with a status strip, last-deploy timestamp, runtime badge and topic
 Stack: TanStack Start (React) + Vite, hand-written vanilla CSS with custom properties. No CSS
 framework drives the visual identity.
 
-## Run locally
+## 🏃 Run locally
 
 ```bash
 bun install --frozen-lockfile
@@ -32,7 +39,7 @@ bun run build    # Nitro cloudflare-module output in .output/
 `bun.lock` is the authoritative lockfile — `npm ci` fails on this tree over a
 transitive `ajv` conflict.
 
-## How the sync works
+## 🔄 How the sync works
 
 The site **never calls the GitHub API from the browser**. It reads `src/data/portfolio.json`,
 which is committed to the repo and refreshed by a scheduled GitHub Action.
@@ -48,7 +55,7 @@ which is committed to the repo and refreshed by a scheduled GitHub Action.
   `generatedAt`), so there is no empty-commit noise.
 - A second job builds the site and deploys it to GitHub Pages via `actions/deploy-pages`.
 
-## Curate from GitHub, no redeploys
+## 🏷️ Curate from GitHub, no redeploys
 
 Curation is done with repository topics in the GitHub UI:
 
@@ -59,7 +66,7 @@ Curation is done with repository topics in the GitHub UI:
 
 Add or remove the topic on GitHub; the next sync run updates the site.
 
-## Design system
+## 🎨 Design system
 
 Palette (CSS custom properties in `src/styles.css`) — color is semantic, never decorative:
 
@@ -78,15 +85,24 @@ fully disabled under `prefers-reduced-motion`.
 
 The mascot is an original ASCII console daemon; no third-party marks or characters are used.
 
-## Author
+### 🛺 Author
 
-**Wesley Lima** — Backend Software Engineer II at Itaú Unibanco, working on Personal
-Insurance systems. Java, Spring Boot and AWS, with depth in event-driven architecture,
-observability and FinOps.
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://www.linkedin.com/in/wesslima/" title="Wesley Lima">
+        <img src=".github/author.png" width="100px;" alt="Wesley Lima"/><br>
+        <sub>
+          <b>Wesley Lima</b>
+        </sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
-[github.com/codewesleylima](https://github.com/codewesleylima) ·
-[linkedin.com/in/wesslima](https://linkedin.com/in/wesslima)
+Backend Software Engineer II at Itaú Unibanco, working on Personal Insurance systems.
+Java, Spring Boot and AWS, with depth in event-driven architecture, observability and FinOps.
 
-## License
+## 📄 License
 
 See [LICENSE](https://github.com/codewesleylima/portifolio/blob/main/LICENSE).
