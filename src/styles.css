@@ -872,16 +872,20 @@ select:focus-visible {
   border-bottom: 1px solid var(--line);
 }
 .site-nav-inner {
-  /* Three tracks, not space-between: the brand centres against the viewport
-     rather than against whatever the links happen to weigh. The empty first
-     track is what keeps it honest. */
+  /* Three tracks: menu pinned left, brand centred against the viewport, controls
+     pinned right. space-between would centre the brand against whatever the
+     controls happen to weigh, which shifts as buttons are added. */
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1rem;
   padding-block: 0.7rem;
 }
-.site-nav-inner > a:first-child {
+.site-nav-inner > .nav-menu {
+  grid-column: 1;
+  justify-self: start;
+}
+.site-nav-inner > .site-nav-brand {
   grid-column: 2;
   justify-self: center;
 }
@@ -890,19 +894,20 @@ select:focus-visible {
   justify-self: end;
 }
 
-@media (max-width: 560px) {
-  /* Too narrow for three tracks: stack, both centred. */
+@media (max-width: 620px) {
+  /* Too narrow for three tracks: menu and controls hold the edges, brand drops out
+     of the bar rather than wrapping into a second row. */
   .site-nav-inner {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 0.5rem;
+    grid-template-columns: auto 1fr;
   }
-  .site-nav-inner > a:first-child,
+  .site-nav-inner > .site-nav-brand {
+    display: none;
+  }
   .site-nav-inner > .site-nav-links {
-    grid-column: 1;
-    justify-self: center;
+    grid-column: 2;
   }
 }
+
 .site-nav a {
   font-family: var(--font-mono);
   font-size: 0.68rem;
@@ -1668,36 +1673,57 @@ select:focus-visible {
   margin-top: 1.8rem;
 }
 .rec-card {
-  margin: 0;
+  /* The whole block is the link — a "read more" affordance inside a card the user
+     already wants to click is one target too many. */
   display: grid;
   gap: 0.9rem;
   align-content: start;
+  padding: 1.1rem;
+  margin: 0;
+  text-decoration: none;
+  border: 1px solid var(--phosphor-deep);
+  border-radius: 14px;
+  background: var(--surface);
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease;
 }
+.rec-card:hover,
+.rec-card:focus-visible {
+  border-color: var(--phosphor);
+  box-shadow: 0 0 22px -6px color-mix(in srgb, var(--phosphor) 45%, transparent);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rec-card {
+    transition: none;
+  }
+  .rec-card:hover,
+  .rec-card:focus-visible {
+    transform: none;
+  }
+}
+
 .rec-head {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 .rec-avatar {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 56px;
+  height: 56px;
   flex: none;
-  border-radius: 50%;
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  color: var(--phosphor);
-  background: color-mix(in srgb, var(--phosphor-deep) 30%, transparent);
-  border: 1px solid color-mix(in srgb, var(--phosphor) 40%, transparent);
+  /* Square, per the brief — a slight radius keeps it from fighting the card corners. */
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--phosphor) 55%, transparent);
 }
 .rec-name {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  color: #eaf6f2;
+  font-size: 0.92rem;
+  letter-spacing: 0.05em;
+  color: #ffffff;
 }
 .rec-role {
   margin: 0;
@@ -1708,25 +1734,31 @@ select:focus-visible {
 .rec-body {
   margin: 0;
   padding-left: 0.9rem;
-  border-left: 2px solid color-mix(in srgb, var(--phosphor) 40%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--phosphor) 45%, transparent);
   display: grid;
   gap: 0.6rem;
 }
 .rec-body p {
   margin: 0;
-  color: #b9c8c9;
-  font-size: 0.85rem;
-  line-height: 1.7;
+  /* White, per the brief: these are the words that matter on this page. */
+  color: #ffffff;
+  font-size: 0.86rem;
+  line-height: 1.75;
 }
 .rec-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.8rem;
   font-family: var(--font-mono);
   font-size: 0.62rem;
   color: var(--dim);
   border-top: 1px solid var(--line);
   padding-top: 0.7rem;
+}
+.rec-cta {
+  margin-left: auto;
+  color: var(--phosphor);
 }
 
 /* ---------- arcade scores ---------- */

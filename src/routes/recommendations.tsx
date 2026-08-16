@@ -17,6 +17,7 @@ const LINKEDIN = "https://linkedin.com/in/wesslima/details/recommendations";
 
 interface Recommendation {
   name: string;
+  photo: string;
   role: string;
   relationship: string;
   date: string;
@@ -32,6 +33,7 @@ interface Recommendation {
 const RECOMMENDATIONS: Recommendation[] = [
   {
     name: "Emerson Parizoto",
+    photo: "/recommendations/emerson.png",
     role: "Desenvolvedor Java · Itaú Unibanco",
     relationship: "Worked on the same team",
     date: "September 2025",
@@ -42,6 +44,7 @@ const RECOMMENDATIONS: Recommendation[] = [
   },
   {
     name: "Isabella Oliveira",
+    photo: "/recommendations/isabella.png",
     role: "Software Engineer · Itaú Unibanco · Tech Mentor @ FIAP",
     relationship: "Worked at the same company, different teams",
     date: "January 2026",
@@ -51,14 +54,6 @@ const RECOMMENDATIONS: Recommendation[] = [
     ],
   },
 ];
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("");
-}
 
 function RecommendationsPage() {
   return (
@@ -72,11 +67,24 @@ function RecommendationsPage() {
 
       <div className="rec-grid">
         {RECOMMENDATIONS.map((rec) => (
-          <figure key={rec.name} className="tile rec-card">
+          <a
+            key={rec.name}
+            className="rec-card"
+            href={LINKEDIN}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label={`Read ${rec.name}'s recommendation on LinkedIn`}
+          >
             <div className="rec-head">
-              <span className="rec-avatar" aria-hidden="true">
-                {initials(rec.name)}
-              </span>
+              <img
+                className="rec-avatar"
+                src={rec.photo}
+                alt=""
+                width={56}
+                height={56}
+                loading="lazy"
+                decoding="async"
+              />
               <div>
                 <p className="rec-name">{rec.name}</p>
                 <p className="rec-role">{rec.role}</p>
@@ -89,11 +97,12 @@ function RecommendationsPage() {
               ))}
             </blockquote>
 
-            <figcaption className="rec-meta">
+            <div className="rec-meta">
               <span>{rec.relationship}</span>
               <span>{rec.date}</span>
-            </figcaption>
-          </figure>
+              <span className="rec-cta">on LinkedIn ↗</span>
+            </div>
+          </a>
         ))}
       </div>
 

@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Shuffle, Volume2, VolumeX } from "lucide-react";
 import NavMenu from "@/components/NavMenu";
 
 import appCss from "../styles.css?url";
@@ -125,12 +125,38 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function SiteNav({ isMuted, onToggleMute }: { isMuted: boolean; onToggleMute: () => void }) {
+function SiteNav({
+  isMuted,
+  onToggleMute,
+  onShuffle,
+}: {
+  isMuted: boolean;
+  onToggleMute: () => void;
+  onShuffle: () => void;
+}) {
   return (
     <nav className="site-nav no-print" aria-label="Main">
       <div className="shell site-nav-inner">
-        <Link to="/">wesley lima</Link>
+        {/* Menu anchors the left edge; sound sits at the far right; the brand and the
+            two direct links keep the centre. */}
+        <NavMenu />
+
+        <Link to="/" className="site-nav-brand">
+          wesley lima
+        </Link>
+
         <div className="site-nav-links">
+          <Link to="/">Console</Link>
+          <Link to="/resume">Resume</Link>
+          <button
+            type="button"
+            className="sound-toggle"
+            onClick={onShuffle}
+            aria-label="Shuffle soundtrack"
+            title="Shuffle soundtrack"
+          >
+            <Shuffle size={16} />
+          </button>
           <button
             type="button"
             className="sound-toggle"
@@ -142,9 +168,6 @@ function SiteNav({ isMuted, onToggleMute }: { isMuted: boolean; onToggleMute: ()
             {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
             <span className="sound-toggle-pip" aria-hidden="true" />
           </button>
-          <Link to="/">Console</Link>
-          <Link to="/resume">Resume</Link>
-          <NavMenu />
         </div>
       </div>
     </nav>
@@ -154,11 +177,20 @@ function SiteNav({ isMuted, onToggleMute }: { isMuted: boolean; onToggleMute: ()
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [isMuted, setIsMuted] = useState(true);
+  const [trackNonce, setTrackNonce] = useState(0);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteNav isMuted={isMuted} onToggleMute={() => setIsMuted((m) => !m)} />
-      <AmbientAudio isMuted={isMuted} onFirstGesture={() => setIsMuted(false)} />
+      <SiteNav
+        isMuted={isMuted}
+        onToggleMute={() => setIsMuted((m) => !m)}
+        onShuffle={() => setTrackNonce((n) => n + 1)}
+      />
+      <AmbientAudio
+        isMuted={isMuted}
+        trackNonce={trackNonce}
+        onFirstGesture={() => setIsMuted(false)}
+      />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

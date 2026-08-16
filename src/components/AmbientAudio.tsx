@@ -1,9 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const VIDEO_ID = "IjseQOHq_mU";
+/**
+ * Lofi / darksynth livestreams in the same register as the original track. Each is a
+ * long continuous stream, so a shuffle lands mid-set rather than at a track boundary —
+ * which suits ambient background better than a playlist would.
+ */
+const TRACKS = ["IjseQOHq_mU", "jfKfPfyJRdk", "4xDzrJKXOOY", "S_MOd40zlYU", "rPjez8z61rI"] as const;
 
 interface AmbientAudioProps {
   isMuted: boolean;
+  /** Bumped by the caller to request a different track. */
+  trackNonce?: number;
   onFirstGesture?: () => void;
 }
 
@@ -13,7 +20,24 @@ interface AmbientAudioProps {
  * on the very first user gesture — click, key, scroll or touch.
  * The caller can also toggle mute state at any time via the isMuted prop.
  */
-export function AmbientAudio({ isMuted, onFirstGesture }: AmbientAudioProps) {
+export function AmbientAudio({ isMuted, trackNonce = 0, onFirstGesture }: AmbientAudioProps) {
+  // Index rather than a random pick at render time: the first track must match on
+  // server and client, or hydration mismatches. Shuffling is a user action, so it
+  // only ever happens after mount.
+  const [index, setIndex] = useState(0);
+  const lastNonce = useRef(trackNonce);
+
+  useEffect(() => {
+    if (trackNonce === lastNonce.current) return;
+    lastNonce.current = trackNonce;
+    setIndex((current) => {
+      if (TRACKS.length < 2) return current;
+      // Never repeat the current track: pick from the others and map back.
+      const offset = Math.floor(Math.random() * (TRACKS.length - 1));
+      return offset >= current ? offset + 1 : offset;
+    });
+  }, [trackNonce]);
+
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const hasWokenRef = useRef(false);
 
@@ -58,8 +82,8 @@ export function AmbientAudio({ isMuted, onFirstGesture }: AmbientAudioProps) {
   }, [onFirstGesture]);
 
   const src =
-    `https://www.youtube-nocookie.com/embed/${VIDEO_ID}` +
-    `?autoplay=1&mute=1&loop=1&playlist=${VIDEO_ID}&controls=0&playsinline=1` +
+    `https://www.youtube-nocookie.com/embed/${TRACKS[index]}` +
+    `?autoplay=1&mute=1&loop=1&playlist=${TRACKS[index]}&controls=0&playsinline=1` +
     `&modestbranding=1&rel=0&enablejsapi=1&iv_load_policy=3`;
 
   return (
