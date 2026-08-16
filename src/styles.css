@@ -151,14 +151,19 @@
 :root {
   --void: #080a0c;
   --surface: #101418;
-  /* Neon violet at 278deg — the same hue as the brand anchor below, lifted to
-     70% lightness so it holds 6.4:1 on --void. #5a018d itself only reaches
-     1.72:1 and cannot carry text or icons. */
-  --phosphor: #c766ff;
-  /* Brand anchor. Structural use only: borders, surface tints, glow bleed. */
-  --phosphor-deep: #5a018d;
-  /* Pushed from 349deg to 3deg: at 349 it sat only 71deg from the violet and
-     both read as magenta, collapsing the healthy/alert distinction. */
+  /* Interface accent, sampled from the mascot's hoodie and lifted for contrast:
+     21deg, 6.92:1 on --void. Carries chrome — links, headings, focus rings,
+     boot log, glow. */
+  --phosphor: #ff6a1a;
+  /* The exact hoodie orange. Structural only: borders, surface tints, the
+     outer glow layer. 5.23:1, so never used alone for small text. */
+  --phosphor-deep: #e45300;
+  /* Status triad, deliberately decoupled from the accent. Orange sits at 21deg,
+     in the middle of the warm wedge where warning and alert live — healthy in
+     orange would land 17deg from amber and 18deg from red, and the tiles would
+     stop being readable at a glance. Cyan is orange's complement at 167deg
+     separation, and keeps the trio 149deg+ apart. */
+  --healthy: #22d3ee;
   --alert: #ff3b30;
   --amber: #ffb020;
   --dim: #6b7a80;
@@ -171,6 +176,9 @@
     0 0 6px color-mix(in srgb, var(--phosphor) 70%, transparent),
     0 0 18px color-mix(in srgb, var(--phosphor) 35%, transparent),
     0 0 42px color-mix(in srgb, var(--phosphor-deep) 55%, transparent);
+  --bloom-healthy:
+    0 0 6px color-mix(in srgb, var(--healthy) 70%, transparent),
+    0 0 18px color-mix(in srgb, var(--healthy) 30%, transparent);
   --bloom-alert:
     0 0 6px color-mix(in srgb, var(--alert) 70%, transparent),
     0 0 18px color-mix(in srgb, var(--alert) 30%, transparent);
@@ -284,8 +292,8 @@ select:focus-visible {
   flex: none;
 }
 .s-healthy {
-  background: var(--phosphor);
-  box-shadow: var(--bloom-phosphor);
+  background: var(--healthy);
+  box-shadow: var(--bloom-healthy);
   animation: pulse 2.6s ease-in-out infinite;
 }
 .s-warning {
@@ -321,8 +329,8 @@ select:focus-visible {
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow:
-    inset 0 0 60px rgba(199, 102, 255, 0.03),
-    0 30px 80px -50px rgba(199, 102, 255, 0.35);
+    inset 0 0 60px rgba(255, 106, 26, 0.03),
+    0 30px 80px -50px rgba(255, 106, 26, 0.35);
 }
 
 .console-bar {
@@ -760,7 +768,7 @@ select:focus-visible {
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, var(--phosphor) 0%, rgba(199, 102, 255, 0) 70%);
+  background: radial-gradient(circle, var(--phosphor) 0%, rgba(255, 106, 26, 0) 70%);
   filter: blur(90px);
   opacity: 0.5;
 }
@@ -1406,7 +1414,7 @@ select:focus-visible {
   border: 1px solid var(--line);
   filter: grayscale(0.35) contrast(1.05);
   box-shadow:
-    0 0 0 1px rgba(199, 102, 255, 0.12),
+    0 0 0 1px rgba(255, 106, 26, 0.12),
     var(--bloom-phosphor);
   transition: filter 0.25s;
 }
@@ -1463,7 +1471,7 @@ select:focus-visible {
 .arcade-stage {
   position: relative;
   background:
-    radial-gradient(ellipse at 50% 120%, rgba(199, 102, 255, 0.08), transparent 60%), var(--surface);
+    radial-gradient(ellipse at 50% 120%, rgba(255, 106, 26, 0.08), transparent 60%), var(--surface);
   cursor: pointer;
   touch-action: manipulation;
 }
