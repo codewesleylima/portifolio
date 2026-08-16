@@ -7,9 +7,10 @@ import {
   type Repo,
   type RepoStatus,
 } from "@/lib/portfolio";
+import { resolveProjects, type Project } from "@/lib/projects";
 
 type SortKey = "pushed" | "stars" | "name";
-type GroupKey = "topic" | "language" | "repo";
+type GroupKey = "project" | "topic" | "language" | "repo";
 
 const HIDDEN_TOPICS = new Set(["featured", "hide-from-portfolio"]);
 
@@ -20,9 +21,10 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
   const [language, setLanguage] = useState<string | null>(null);
   const [topic, setTopic] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>("pushed");
-  const [groupBy, setGroupBy] = useState<GroupKey>("language");
+  const [groupBy, setGroupBy] = useState<GroupKey>("project");
   const [revealed, setRevealed] = useState(false);
   const [active, setActive] = useState<Repo | null>(null);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const languages = useMemo(
@@ -54,7 +56,11 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
     });
   }, [repos, query, language, topic, sort]);
 
+  /** Projects are resolved over the filtered set, so search and chips narrow them too. */
+  const { projects, ungrouped } = useMemo(() => resolveProjects(visible), [visible]);
+
   const groups = useMemo(() => {
+    if (groupBy === "project") return [["standalone", ungrouped] as [string, Repo[]]];
     if (groupBy === "repo") return [["all repositories", visible] as [string, Repo[]]];
     const map = new Map<string, Repo[]>();
     for (const r of visible) {
@@ -67,7 +73,7 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
       for (const key of keys) map.set(key, [...(map.get(key) ?? []), r]);
     }
     return [...map.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-  }, [visible, groupBy]);
+  }, [visible, ungrouped, groupBy]);
 
   /** Repos that share at least one topic with the active one — treated as integrations. */
   const related = useMemo(() => {
@@ -108,6 +114,15 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [active]);
+
+  useEffect(() => {
+    if (!activeProject) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveProject(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeProject]);
 
   const counts = repos.reduce<Record<RepoStatus, number>>(
     (acc, r) => ({ ...acc, [r.status]: acc[r.status] + 1 }),
@@ -163,6 +178,7 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
           value={groupBy}
           onChange={(e) => setGroupBy(e.target.value as GroupKey)}
         >
+          <option value="project">group: projects</option>
           <option value="topic">group: topics</option>
           <option value="language">group: languages</option>
           <option value="repo">group: repositories</option>
@@ -213,6 +229,66 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
           </button>
         ))}
       </div>
+
+      {groupBy === "project" && projects.length > 0 && (
+        <div className="grid-projects" style={{ marginTop: "1.6rem" }}>
+          {projects.map((p, i) => (
+            <button
+              type="button"
+              key={p.id}
+              className={`tile project-tile${revealed ? " revealed" : ""}`}
+              onClick={() => setActiveProject(p)}
+              aria-haspopup="dialog"
+              style={
+                {
+                  "--strip": STATUS_COLOR[p.status],
+                  "--d": `${Math.min(i, 12) * 55}ms`,
+                } as React.CSSProperties
+              }
+            >
+              <div className="project-tile-head">
+                <span className={`dot s-${p.status}`} aria-hidden="true" />
+                <span
+                  className={`t-${p.status}`}
+                  style={{ fontSize: "0.62rem", letterSpacing: "0.2em" }}
+                >
+                  {STATUS_LABEL[p.status]}
+                </span>
+                <span className="tile-hint" style={{ marginLeft: "auto" }}>
+                  open
+                </span>
+              </div>
+
+              <div className="tile-name">{p.name}</div>
+              <p className="tile-desc">{p.tagline}</p>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                {p.language && (
+                  <span className="badge">
+                    <span
+                      className="dot"
+                      style={{ background: p.language.color }}
+                      aria-hidden="true"
+                    />
+                    {p.language.name}
+                  </span>
+                )}
+                <span className="label-chip">
+                  {p.members.length} {p.members.length === 1 ? "repo" : "repos"}
+                </span>
+              </div>
+
+              <div
+                className="meta-row"
+                style={{ borderTop: "1px solid var(--line)", paddingTop: 10 }}
+              >
+                <span title={utcStamp(p.pushedAt)}>last deploy {sinceLabel(p.pushedAt, now)}</span>
+                <span className="tile-hint">click to inspect</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div ref={gridRef} style={{ marginTop: "1.6rem" }}>
         {groups.map(([groupName, items]) => (
@@ -344,6 +420,64 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
         <p className="section-note" style={{ marginTop: "1.5rem" }}>
           No services match this query. Clear the filters to restore the full registry.
         </p>
+      )}
+
+      {activeProject && (
+        <div className="svc-overlay" onClick={() => setActiveProject(null)}>
+          <div
+            className="svc-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${activeProject.name} details`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ "--strip": STATUS_COLOR[activeProject.status] } as React.CSSProperties}
+          >
+            <button className="svc-close" onClick={() => setActiveProject(null)} aria-label="Close">
+              ✕
+            </button>
+
+            <p className="eyebrow" style={{ color: STATUS_COLOR[activeProject.status] }}>
+              project · {STATUS_LABEL[activeProject.status]}
+            </p>
+            <h3 className="svc-modal-title">{activeProject.name}</h3>
+
+            <div className="project-summary">
+              {activeProject.summary.map((line, i) => (
+                <p key={i}>{line}</p>
+              ))}
+            </div>
+
+            <div className="meta-row" style={{ marginTop: "0.9rem" }}>
+              {activeProject.language && <span>{activeProject.language.name}</span>}
+              <span>
+                {activeProject.members.length}{" "}
+                {activeProject.members.length === 1 ? "repository" : "repositories"}
+              </span>
+              <span>last deploy {sinceLabel(activeProject.pushedAt, now)}</span>
+            </div>
+
+            <div style={{ marginTop: "1.2rem" }}>
+              <p className="eyebrow">repositories in this project</p>
+              <ul className="svc-related">
+                {activeProject.members.map((repo) => (
+                  <li key={repo.name}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveProject(null);
+                        setActive(repo);
+                      }}
+                    >
+                      <span className={`dot s-${repo.status}`} aria-hidden="true" />
+                      <span className="svc-related-name">{repo.name}</span>
+                      <span className="svc-related-tags">{repo.primaryLanguage?.name ?? "—"}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
       )}
 
       {active && (

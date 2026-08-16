@@ -1,0 +1,71 @@
+[
+  {
+    "id": "ecommerce",
+    "name": "Project Ecommerce",
+    "tagline": "Event-driven storefront split into six bounded contexts",
+    "summary": [
+      "A storefront broken into six independently deployable Spring Boot services, each",
+      "owning its own data: auth issues and validates tokens, catalog holds the product",
+      "tree, stock reserves and releases inventory, order runs the purchase saga, payments",
+      "settles transactions, and customers keeps the identity record.",
+      "A BFF sits in front and composes the reads the web client needs, so the browser",
+      "never fans out across six services to render a single page."
+    ],
+    "repos": [
+      "ms-wzzy-auth",
+      "ms-wzzy-catalog",
+      "ms-wzzy-customers",
+      "ms-wzzy-order",
+      "ms-wzzy-payments",
+      "ms-wzzy-stock",
+      "bff-wzzy-library"
+    ]
+  },
+  {
+    "id": "library",
+    "name": "Library Management",
+    "tagline": "Lending, catalogue and member records",
+    "summary": [
+      "A library domain modelled end to end: titles and copies, member registration,",
+      "lending with due dates, and returns with penalty rules.",
+      "Built across several iterations as the modelling got sharper — the later repos",
+      "carry the domain logic the earlier ones only sketched."
+    ],
+    "repos": ["system-management-library", "library", "biblioteca", "Livros"]
+  },
+  {
+    "id": "hr",
+    "name": "People Operations",
+    "tagline": "HR domain: employees, org structure and records",
+    "summary": [
+      "Employee lifecycle handled as its own domain: hiring records, org structure,",
+      "role changes and terminations, with the audit trail HR processes require.",
+      "Two takes on the same problem — one procedural, one domain-driven — kept side",
+      "by side to compare how the model holds as rules accumulate."
+    ],
+    "repos": ["unifyops-hr", "connexus-hr", "gestao-pessoas", "gerenciamento-pessoas"]
+  },
+  {
+    "id": "microservices-lab",
+    "name": "Microservices Lab",
+    "tagline": "Ordering flow used to test integration patterns",
+    "summary": [
+      "A deliberately small ordering flow — catalogue, order, receipt — used as a bench",
+      "for integration patterns: synchronous versus event-driven calls, idempotency,",
+      "retry and compensation.",
+      "Small enough that a pattern's cost is visible instead of buried in domain code."
+    ],
+    "repos": ["ms-catalogo", "ms-pedido", "ms-comprovante"]
+  },
+  {
+    "id": "platform",
+    "name": "Platform Foundations",
+    "tagline": "Service template and the infrastructure it ships on",
+    "summary": [
+      "The starting point for new services and the infrastructure that runs them:",
+      "a Spring Boot template carrying the conventions worth repeating, and Terraform",
+      "describing the AWS footprint those services land on."
+    ],
+    "repos": ["base-spring-boot", "aws-infra-project"]
+  }
+]

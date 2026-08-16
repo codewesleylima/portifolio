@@ -1503,3 +1503,50 @@ select:focus-visible {
   background: color-mix(in srgb, var(--void) 72%, transparent);
   padding: 1rem;
 }
+
+/* ---------- project blocks ---------- */
+.grid-projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+}
+
+.project-tile {
+  /* Reads heavier than a service tile on purpose: a project is the entry point,
+     the repositories inside it are the detail. */
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  border-color: color-mix(in srgb, var(--phosphor-deep) 45%, var(--line));
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      color-mix(in srgb, var(--phosphor-deep) 10%, transparent),
+      transparent 60%
+    ),
+    var(--surface);
+}
+
+.project-tile .tile-name {
+  font-size: 1.05rem;
+}
+
+.project-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.project-summary {
+  margin-top: 0.8rem;
+  max-width: 62ch;
+}
+
+.project-summary p {
+  /* One <p> per manifest line, so the summary breaks where it was written to
+     break rather than wherever the container happens to end. */
+  color: #b9c8c9;
+  font-size: clamp(0.82rem, 2vw, 0.92rem);
+  line-height: 1.7;
+  margin: 0;
+}
