@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T06:54:13.736Z",
+  "generatedAt": "2026-08-16T07:12:37.330Z",
   "profile": {
     "login": "codewesleylima",
     "name": "Wesley Lima",
@@ -14,12 +14,28 @@
       "description": null,
       "url": "https://github.com/codewesleylima/portifolio",
       "homepageUrl": null,
-      "primaryLanguage": null,
-      "languages": [],
+      "primaryLanguage": {
+        "name": "TypeScript",
+        "color": "#3178c6"
+      },
+      "languages": [
+        {
+          "name": "TypeScript",
+          "percent": 85.4
+        },
+        {
+          "name": "CSS",
+          "percent": 11.8
+        },
+        {
+          "name": "JavaScript",
+          "percent": 2.8
+        }
+      ],
       "topics": [],
       "stars": 0,
       "forks": 0,
-      "pushedAt": "2026-08-16T06:54:00Z",
+      "pushedAt": "2026-08-16T06:54:14Z",
       "createdAt": "2026-08-16T05:08:10Z",
       "isArchived": false,
       "isFork": false,
