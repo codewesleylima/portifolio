@@ -55,48 +55,44 @@ function Index() {
           <p className="eyebrow">{profile.login} // engineering console</p>
         </div>
 
-        <h1 className="hero-name" style={{ marginTop: "1.2rem" }}>
-          WESLEY
-          <br />
-          LIMA
-        </h1>
-
-        <p className="eyebrow" style={{ marginTop: "1rem", color: "var(--phosphor)" }}>
-          Backend Software Engineer II · Itaú Unibanco · São Paulo
-        </p>
-
-        <div
-          style={{
-            display: "grid",
-            gap: "1.6rem",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-            marginTop: "1.1rem",
-            alignItems: "start",
-          }}
-        >
-          <div>
-            <p className="hero-thesis">
-              I keep money-moving systems boringly reliable: event-driven Java services, hard
-              latency budgets, and observability that catches incidents before customers do.
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", marginTop: "1.5rem" }}>
-              <Link className="btn btn-primary" to="/resume">
-                Résumé
-              </Link>
-              <a className="btn" href={LINKS.github} target="_blank" rel="noreferrer noopener">
-                GitHub
-              </a>
-              <a className="btn" href={LINKS.linkedin} target="_blank" rel="noreferrer noopener">
-                LinkedIn
-              </a>
-              <a className="btn" href={LINKS.email}>
-                Email
-              </a>
-            </div>
+        {/* Centred identity block: mascot flanks the name, everything else
+            stacks under it. The About panel gets the full width below. */}
+        <div className="hero-identity">
+          <div className="hero-namerow">
+            <h1 className="hero-name">
+              WESLEY
+              <br />
+              LIMA
+            </h1>
             <Mascot booted={booted} />
           </div>
-          <AboutMe onBooted={onBooted} />
+
+          <p className="eyebrow" style={{ color: "var(--phosphor)" }}>
+            Backend Software Engineer II · Itaú Unibanco · São Paulo
+          </p>
+
+          <p className="hero-thesis">
+            I keep money-moving systems boringly reliable: event-driven Java services, hard latency
+            budgets, and observability that catches incidents before customers do.
+          </p>
+
+          <div className="hero-actions">
+            <Link className="btn btn-primary" to="/resume">
+              Résumé
+            </Link>
+            <a className="btn" href={LINKS.github} target="_blank" rel="noreferrer noopener">
+              GitHub
+            </a>
+            <a className="btn" href={LINKS.linkedin} target="_blank" rel="noreferrer noopener">
+              LinkedIn
+            </a>
+            <a className="btn" href={LINKS.email}>
+              Email
+            </a>
+          </div>
         </div>
+
+        <AboutMe onBooted={onBooted} />
       </header>
 
       {/* SERVICES */}

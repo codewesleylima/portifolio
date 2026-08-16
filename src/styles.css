@@ -665,23 +665,54 @@ select:focus-visible {
   position: relative;
 }
 
-.mascot {
-  /* Lives inside the hero's left column, under the CTA row: the column ends
-     early next to the tall About panel, and the sprite fills that void. */
-  position: relative;
-  width: clamp(180px, 20vw, 280px);
-  margin-top: 2rem;
-  line-height: 0;
-  pointer-events: none;
+.hero-identity {
+  /* Centred identity block. Everything here is centre-aligned on purpose:
+     it reads as a console banner, not as a column of copy. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  margin-top: clamp(2rem, 5vw, 3.5rem);
 }
 
-@media (max-width: 860px) {
-  /* Single-column layout: keep it small so it never pushes the About panel
-     below the fold on a phone. */
-  .mascot {
-    width: clamp(140px, 40vw, 200px);
-    margin-top: 1.5rem;
+.hero-namerow {
+  /* The mascot flanks the name and shares its optical baseline. */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(1rem, 3vw, 2.4rem);
+}
+
+.hero-identity .hero-thesis {
+  max-width: 58ch;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .hero-namerow {
+    /* Side by side stops working once the name wraps: stack instead. */
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 0.8rem;
   }
+}
+
+.mascot {
+  /* Sits beside the display type, so it is sized against the name's cap
+     height rather than against the column it used to occupy. */
+  position: relative;
+  width: clamp(110px, 15vw, 190px);
+  flex: none;
+  line-height: 0;
+  pointer-events: none;
 }
 
 .mascot-sprite,
@@ -1341,13 +1372,13 @@ select:focus-visible {
 
 /* ---------- about panel ---------- */
 .about-panel {
-  margin-top: -0.6rem;
+  margin-top: clamp(2.4rem, 5vw, 3.6rem);
   display: grid;
   gap: 1rem;
 }
 .about-body {
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 180px 1fr;
   gap: 1.1rem;
   padding: 1.1rem;
 }
