@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AboutMe from "@/components/AboutMe";
 import Arcade from "@/components/Arcade";
 import Mascot from "@/components/Mascot";
 import DeployLog from "@/components/DeployLog";
 import ServiceConsole from "@/components/ServiceConsole";
 import Telemetry from "@/components/Telemetry";
-import { portfolio, utcStamp } from "@/lib/portfolio";
+import { portfolio, utcStamp, type Portfolio } from "@/lib/portfolio";
 
 const TITLE = "Wesley Lima — Backend Engineer Console";
 const DESCRIPTION =
@@ -33,7 +33,31 @@ const LINKS = {
 };
 
 function Index() {
-  const { profile, repos: rawRepos, generatedAt } = portfolio;
+  // SSR paints the baked dataset immediately, so there is no empty state and no
+  // layout shift. After hydration we ask the Worker for a live read: making a repo
+  // private or public shows up here without waiting for the daily sync or a deploy.
+  // Any failure leaves the baked data exactly as it was.
+  const [data, setData] = useState<Portfolio>(portfolio);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/repos")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((live: Portfolio) => {
+        if (cancelled || !live.repos?.length) return;
+        setData(live);
+        setIsLive(true);
+      })
+      .catch(() => {
+        /* keep the baked dataset */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const { profile, repos: rawRepos, generatedAt } = data;
   const publicRepos = rawRepos.filter((r) => !r.isPrivate);
   const [now] = useState(() => Date.now());
 
@@ -144,7 +168,7 @@ function Index() {
         >
           <span>
             <span className="dot s-healthy" style={{ marginRight: 8 }} />
-            last sync {utcStamp(generatedAt)}
+            {isLive ? "live" : "last sync"} {utcStamp(generatedAt)}
           </span>
           <span>
             {publicRepos.length} public repos · {profile.followers} followers
