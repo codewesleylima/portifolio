@@ -1,0 +1,74 @@
+name: Sync portfolio and deploy
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: portfolio-pipeline
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The built-in GITHUB_TOKEN authenticates as github-actions[bot], which is
+      # why the query targets a named user instead of `viewer`. If GitHub returns
+      # zero repos the script exits non-zero instead of writing an empty file.
+      - name: Fetch repositories from the GitHub GraphQL API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_SYNC_TOKEN: ${{ secrets.GH_SYNC_TOKEN }}
+          GITHUB_LOGIN: codewesleylima
+        run: node scripts/sync-github.mjs
+
+      - name: Commit only when the data actually changed
+        run: |
+          if git diff --quiet -- src/data/portfolio.json; then
+            echo "portfolio.json unchanged — no commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/portfolio.json
+          git commit -m "chore: sync portfolio data"
+          git push
+
+  deploy:
+    needs: sync
+    runs-on: ubuntu-latest
+    steps:
+      # Pulls main *after* the sync job pushed, so the deploy ships fresh data.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # bun.lock is the authoritative lockfile here. npm ci fails on this tree
+      # (lockfile ajv@6 vs required ajv@8), so bun is the correct install path.
+      - run: bun install --frozen-lockfile
+
+      # Nitro (cloudflare-module preset) writes to .output, not dist.
+      - run: bun run build
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config .output/server/wrangler.json --name portfolio-wesley-lima

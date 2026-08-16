@@ -1,0 +1,110 @@
+{
+  "name": "Wesley Francisco Pereira Lima",
+  "title": "Software Engineer II",
+  "location": "São Paulo, Brazil",
+  "links": {
+    "linkedin": "https://linkedin.com/in/wesslima",
+    "github": "https://github.com/codewesleylima",
+    "email": "engwesleydev@gmail.com"
+  },
+  "summary": "Software Engineer II with 3 years of Backend Java and AWS experience, with postgraduate degrees in Software Architecture (FIAP) and Software Engineering (UCB). Lead engineer for the 2026 World Cup campaign banking product offer, in partnership with Cazé TV, delivered across 104 games and reaching over 150 million people in under 2 months. Has driven projects end to end on flagship revenue products at Latin America's largest bank and led legacy architecture modernization that acquired 360K new customers. Focused on system design, microservices, observability, and distributed systems.",
+  "experience": [
+    {
+      "company": "Itaú Unibanco",
+      "title": "Software Engineer II",
+      "team": "Insurance Offer Platform",
+      "start": "2025-11",
+      "end": null,
+      "current": true,
+      "bullets": [
+        "Led the development of a banking product offer for the 2026 World Cup campaign in partnership with Cazé TV, delivered across 104 games and reaching over 150 million people in under 2 months.",
+        "Principal backend engineer for the Financial Transaction Insurance Offer channel, a flagship insurance offer product reaching over 2 million customers annually.",
+        "DevOps lead for resource optimization and infrastructure modernization of insurance banking projects, achieving 30% cost reduction and 45% performance and resilience gains.",
+        "Owned the observability architecture of the bank's primary financial product offer channel — monitoring, alerts, traces, and dashboards — automating incident detection and reducing platform MTTR.",
+        "Expanded test coverage across insurance applications with unit, integration, and mutation testing, reaching over 95% coverage."
+      ]
+    },
+    {
+      "company": "Itaú Unibanco",
+      "title": "Software Engineer I",
+      "team": "Insurance Claims Platform",
+      "start": "2023-11",
+      "end": "2025-10",
+      "current": false,
+      "bullets": [
+        "Led the modernization and migration of legacy insurance claims projects to microservices integrated across web, mobile, branch, and consultant channels (Dynamics 365), acquiring 360K new customers.",
+        "Built the new insurance claims portal (web and mobile) that optimized the legacy process by 45% and drove a 74% increase in insurance service user acquisition.",
+        "Led FinOps on the Claims product with a new infrastructure approach that cut recurring cloud spend within 3 months, a model adopted as a reference by other teams across the bank.",
+        "Developed event-driven solutions with synchronous and asynchronous processing and end-to-end observability via Datadog, CloudWatch, and Grafana."
+      ]
+    },
+    {
+      "company": "Itaú Unibanco",
+      "title": "Software Engineering Analyst (Bootcamp)",
+      "team": "Insurance Onboarding Platform",
+      "start": "2023-02",
+      "end": "2023-10",
+      "current": false,
+      "bullets": [
+        "Backend engineer on the Insurance Onboarding team for the mobile channel (iOS and Android) of the Itaú app, used by tens of millions of customers.",
+        "Built the complete Insurance Onboarding Portal in Java and AWS, launched with a campaign featuring Sylvester Stallone and Lewis Hamilton and acquiring 120K new users per year.",
+        "Promoted to Software Engineer I as a standout of the bootcamper cycle, on the strength of the product's performance across the 9-month program."
+      ]
+    }
+  ],
+  "skills": {
+    "Languages": ["Java 11+", "Kotlin", "Go", "Python"],
+    "Frameworks": ["Spring Boot (MVC, Security, Data JPA)"],
+    "Architecture": [
+      "Microservices",
+      "System Design",
+      "Hexagonal Architecture",
+      "Clean Architecture",
+      "DDD"
+    ],
+    "Cloud": ["AWS EC2", "Lambda", "RDS", "S3", "SQS", "SNS", "CloudWatch", "EventBridge", "IAM"],
+    "Infrastructure": ["Docker", "Kubernetes", "Terraform"],
+    "Messaging": ["Kafka", "RabbitMQ", "ActiveMQ"],
+    "Data": ["PostgreSQL", "MySQL", "MongoDB", "Redis", "DynamoDB"],
+    "Observability": ["Datadog", "Grafana", "CloudWatch"],
+    "Quality": ["TDD", "JUnit", "SonarQube", "Veracode"],
+    "Other": ["FinOps", "LLMs applied to engineering"]
+  },
+  "education": [
+    {
+      "degree": "Postgraduate, Software Architecture",
+      "school": "FIAP",
+      "period": "2026 – 2027"
+    },
+    {
+      "degree": "Postgraduate, Software Engineering",
+      "school": "Universidade Católica de Brasília",
+      "period": "2025 – 2026"
+    },
+    {
+      "degree": "CST, Systems Analysis and Development",
+      "school": "Universidade Católica de Brasília",
+      "period": "Completed Jul 2024",
+      "note": "ProUni full scholarship · GPA 8.5/10"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Solutions Architect – Associate (SAA-C03)",
+    "AWS Certified Cloud Practitioner (CLF-C02)"
+  ],
+  "languages": [
+    {
+      "name": "Portuguese",
+      "level": "Native"
+    },
+    {
+      "name": "English",
+      "level": "Intermediate"
+    },
+    {
+      "name": "Spanish",
+      "level": "Intermediate"
+    }
+  ],
+  "updated": "2026-08-16"
+}
