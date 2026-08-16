@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import AboutMe from "@/components/AboutMe";
 import Arcade from "@/components/Arcade";
 import Mascot from "@/components/Mascot";
@@ -36,8 +36,6 @@ function Index() {
   const { profile, repos: rawRepos, generatedAt } = portfolio;
   const publicRepos = rawRepos.filter((r) => !r.isPrivate);
   const [now] = useState(() => Date.now());
-  const [booted, setBooted] = useState(false);
-  const onBooted = useCallback(() => setBooted(true), []);
 
   return (
     <main className="crt">
@@ -56,7 +54,7 @@ function Index() {
               <br />
               LIMA
             </h1>
-            <Mascot booted={booted} />
+            <Mascot />
           </div>
 
           <p className="eyebrow" style={{ color: "var(--phosphor)" }}>
@@ -84,7 +82,7 @@ function Index() {
           </div>
         </div>
 
-        <AboutMe onBooted={onBooted} />
+        <AboutMe />
       </header>
 
       {/* SERVICES */}

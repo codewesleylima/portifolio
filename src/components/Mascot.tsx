@@ -1,11 +1,7 @@
-interface Props {
-  booted?: boolean;
-}
-
 /** Pixel-art sprite of the engineer at the console. Decorative-adjacent, keeps its alt text. */
-export default function Mascot({ booted = false }: Props) {
+export default function Mascot() {
   return (
-    <div className={`mascot${booted ? " is-booted" : ""}`}>
+    <div className="mascot">
       <span className="mascot-phosphor" aria-hidden="true" />
       <img
         className="mascot-sprite"

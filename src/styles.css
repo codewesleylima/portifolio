@@ -743,19 +743,10 @@ select:focus-visible {
 .mascot-sprite {
   position: relative;
   z-index: 2;
-  opacity: 0;
-}
-.mascot.is-booted .mascot-sprite {
-  animation: mascot-wake-in 0.01s steps(1) forwards;
-}
-
-@keyframes mascot-wake-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  /* Visible from the first frame, alongside the name. The sprite used to be
+     gated behind the boot log finishing, which left the operator's chair empty
+     while the console was already introducing itself. */
+  opacity: 1;
 }
 
 /* phosphor glow behind the CRT screen area */
@@ -795,29 +786,25 @@ select:focus-visible {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .mascot.is-booted .mascot-sprite {
-    animation:
-      mascot-wake-in 0.01s steps(1) forwards,
-      mascot-type 0.9s steps(2) infinite;
+  .mascot .mascot-sprite {
+    animation: mascot-type 0.9s steps(2) infinite;
   }
 
   .mascot-phosphor {
     animation: mascot-phosphor 2.4s ease-in-out infinite alternate;
   }
 
-  .hero-shell:hover .mascot.is-booted .mascot-sprite,
-  .hero-shell:focus-within .mascot.is-booted .mascot-sprite {
-    animation:
-      mascot-wake-in 0.01s steps(1) forwards,
-      mascot-type 0.45s steps(2) infinite;
+  .hero-shell:hover .mascot .mascot-sprite,
+  .hero-shell:focus-within .mascot .mascot-sprite {
+    animation: mascot-type 0.45s steps(2) infinite;
   }
 
-  .hero-shell:hover .mascot.is-booted .mascot-ghost-a,
-  .hero-shell:focus-within .mascot.is-booted .mascot-ghost-a {
+  .hero-shell:hover .mascot .mascot-ghost-a,
+  .hero-shell:focus-within .mascot .mascot-ghost-a {
     animation: mascot-glitch-a 0.12s steps(2) 1;
   }
-  .hero-shell:hover .mascot.is-booted .mascot-ghost-b,
-  .hero-shell:focus-within .mascot.is-booted .mascot-ghost-b {
+  .hero-shell:hover .mascot .mascot-ghost-b,
+  .hero-shell:focus-within .mascot .mascot-ghost-b {
     animation: mascot-glitch-b 0.12s steps(2) 1;
   }
 }
