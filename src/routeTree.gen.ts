@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChannelRouteImport } from './routes/channel'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as ResumeRouteImport } from './routes/resume'
 import { Route as StudiesRouteImport } from './routes/studies'
@@ -17,6 +18,11 @@ import { Route as StudiesRouteImport } from './routes/studies'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChannelRoute = ChannelRouteImport.update({
+  id: '/channel',
+  path: '/channel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecommendationsRoute = RecommendationsRouteImport.update({
@@ -37,12 +43,14 @@ const StudiesRoute = StudiesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/channel': typeof ChannelRoute
   '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
   '/studies': typeof StudiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/channel': typeof ChannelRoute
   '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
   '/studies': typeof StudiesRoute
@@ -50,20 +58,23 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/channel': typeof ChannelRoute
   '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
   '/studies': typeof StudiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/recommendations' | '/resume' | '/studies'
+  fullPaths: '/' | '/channel' | '/recommendations' | '/resume' | '/studies'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/recommendations' | '/resume' | '/studies'
-  id: '__root__' | '/' | '/recommendations' | '/resume' | '/studies'
+  to: '/' | '/channel' | '/recommendations' | '/resume' | '/studies'
+  id:
+    '__root__' | '/' | '/channel' | '/recommendations' | '/resume' | '/studies'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChannelRoute: typeof ChannelRoute
   RecommendationsRoute: typeof RecommendationsRoute
   ResumeRoute: typeof ResumeRoute
   StudiesRoute: typeof StudiesRoute
@@ -76,6 +87,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/channel': {
+      id: '/channel'
+      path: '/channel'
+      fullPath: '/channel'
+      preLoaderRoute: typeof ChannelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recommendations': {
@@ -104,6 +122,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChannelRoute: ChannelRoute,
   RecommendationsRoute: RecommendationsRoute,
   ResumeRoute: ResumeRoute,
   StudiesRoute: StudiesRoute,

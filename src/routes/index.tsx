@@ -7,6 +7,7 @@ import DeployLog from "@/components/DeployLog";
 import ServiceConsole from "@/components/ServiceConsole";
 import Telemetry from "@/components/Telemetry";
 import { portfolio, utcStamp, type Portfolio } from "@/lib/portfolio";
+import { useLocale } from "@/lib/i18n";
 
 const TITLE = "Wesley Lima — Backend Engineer Console";
 const DESCRIPTION =
@@ -37,6 +38,7 @@ function Index() {
   // layout shift. After hydration we ask the Worker for a live read: making a repo
   // private or public shows up here without waiting for the daily sync or a deploy.
   // Any failure leaves the baked data exactly as it was.
+  const { t } = useLocale();
   const [data, setData] = useState<Portfolio>(portfolio);
   const [isLive, setIsLive] = useState(false);
 
@@ -82,15 +84,10 @@ function Index() {
           </div>
 
           <p className="eyebrow" style={{ color: "var(--phosphor)" }}>
-            Backend Software Engineer II · Itaú Unibanco · São Paulo
+            {t("hero.role")}
           </p>
 
-          <p className="hero-thesis">
-            Backend engineer working on software engineering and architecture for the Personal
-            Insurance systems at Itaú Unibanco. My work covers backend development, code review,
-            acting on what observability and metrics surface, and driving discussions on solution
-            design and engineering practice — increasingly with AI in the loop.
-          </p>
+          <p className="hero-thesis">{t("hero.thesis")}</p>
 
           <div className="hero-actions">
             <Link className="btn btn-primary" to="/resume">
@@ -116,7 +113,7 @@ function Index() {
       <section className="section" id="arcade">
         <div className="shell">
           <p className="eyebrow">00 // arcade</p>
-          <h2 className="section-title">Debug run</h2>
+          <h2 className="section-title">{t("section.arcade")}</h2>
           <p className="section-note">
             A break from the dashboards: hop over incidents and keep the service up. Space, arrow up
             or tap to jump.
@@ -156,7 +153,7 @@ function Index() {
       <section className="section" id="deploy-log">
         <div className="shell">
           <p className="eyebrow">03 // history</p>
-          <h2 className="section-title">Deploy log</h2>
+          <h2 className="section-title">{t("section.history")}</h2>
           <p className="section-note">Career history, newest release first.</p>
           <DeployLog />
         </div>
@@ -181,7 +178,7 @@ function Index() {
             target="_blank"
             rel="noreferrer noopener"
           >
-            License
+            {t("footer.license")}
           </a>
         </div>
       </footer>

@@ -8,128 +8,217 @@ export const Route = createFileRoute("/studies")({
       {
         name: "description",
         content:
-          "Current study track: algorithms and data structures, distributed systems, and language fundamentals under constraint.",
+          "A structured protocol for building algorithmic proficiency: 60 topics across 8 blocks, governed by spaced repetition, interleaving, active recall and elaboration.",
       },
     ],
   }),
 });
 
-interface Track {
-  id: string;
-  title: string;
-  status: "active" | "recurring" | "queued";
-  premise: string;
-  items: string[];
-}
+const REPO = "https://github.com/codewesleylima/leetcode";
 
-/**
- * Deliberately framed as a research log rather than a checklist. The point is not
- * "topics I have covered" — that reads as a syllabus — but what each track is
- * actually trying to answer.
- */
-const TRACKS: Track[] = [
+/** The four findings the schedule is actually derived from, not decoration. */
+const BASIS = [
   {
-    id: "dsa",
-    title: "Algorithms & data structures",
-    status: "active",
-    premise:
-      "Working through the classical problem space from first principles: not memorising solutions, but building the intuition for why a given structure collapses a problem's complexity.",
-    items: [
-      "Binary search and its non-obvious variants — first/last occurrence, search on answer space, rotated arrays",
-      "Trees and graphs: traversal orders, shortest paths, topological ordering",
-      "Dynamic programming as a recurrence made explicit, rather than as a pattern to recognise",
-      "Complexity analysis argued out loud, including the space cost people skip",
-    ],
+    citation: "Bjork & Bjork (1992)",
+    finding: "Desirable difficulties",
+    applied: "Reasoning is externalised in writing and out loud before a topic counts as done.",
   },
   {
-    id: "constraint",
-    title: "Writing under constraint",
-    status: "active",
-    premise:
-      "Practising Java with no IDE, no autocomplete and no compiler. Removing the tooling exposes exactly which parts of the language you know and which parts you were being carried through.",
-    items: [
-      "Collections API and their guarantees recalled from memory, not from a dropdown",
-      "Edge cases reasoned about before running anything — because nothing runs",
-      "Narrating a solution in English while writing it, at conversation pace",
-      "Timeboxed sessions: the constraint is the point, not the discomfort",
-    ],
+    citation: "Ericsson (2008)",
+    finding: "Deliberate practice",
+    applied: "Work sits at the edge of current competence, with immediate specific feedback.",
   },
   {
-    id: "distributed",
-    title: "Distributed systems",
-    status: "recurring",
-    premise:
-      "The failure modes that only appear at scale, studied on purpose rather than discovered during an incident.",
-    items: [
-      "Consistency models and what each one actually costs the caller",
-      "Idempotency, retries and compensation in payment-adjacent flows",
-      "Observability as a design input: what to emit so the question is answerable later",
-      "Cost as an architectural constraint — FinOps applied at design time, not audit time",
-    ],
+    citation: "Karpicke & Roediger (2008)",
+    finding: "Spacing effect",
+    applied: "Fixed review checkpoints at T+2 and T+7 days, widening as retention holds.",
   },
   {
-    id: "ai",
-    title: "AI applied to engineering itself",
-    status: "recurring",
-    premise:
-      "Less about using models and more about where they measurably change the work: review, exploration, and the parts of a task that are genuinely mechanical.",
-    items: [
-      "Where model output needs verification and where it does not",
-      "Encoding team conventions so guidance is repeatable rather than re-explained",
-      "Reading the failure cases as carefully as the successes",
-    ],
+    citation: "Dunlosky et al. (2013)",
+    finding: "Technique efficacy",
+    applied: "Topics rotate across blocks; self-testing always precedes the worked solution.",
   },
 ];
 
-const STATUS_LABEL: Record<Track["status"], string> = {
-  active: "IN PROGRESS",
-  recurring: "ONGOING",
-  queued: "QUEUED",
+const BLOCKS = [
+  {
+    id: "0",
+    name: "Fundamentals",
+    weight: "continuous",
+    detail:
+      "Java syntax from memory, overflow and type pitfalls, Big-O analysis, manual tracing, clean code under time pressure.",
+  },
+  {
+    id: "1",
+    name: "Arrays & strings",
+    weight: "high",
+    detail:
+      "Two pointers, convergent and divergent. Fixed and dynamic sliding windows. Prefix sums. Binary search, classical and over answer space.",
+  },
+  {
+    id: "2",
+    name: "Stacks, heaps & queues",
+    weight: "high",
+    detail:
+      "Stack-based parsing, monotonic stack and queue, heap operations, priority queues, two-heap patterns, quickselect.",
+  },
+  {
+    id: "3",
+    name: "Graphs & trees",
+    weight: "maximum",
+    detail:
+      "The highest-frequency cluster. Adjacency and implicit representations, layered and multi-source BFS, recursive and iterative DFS, cycle detection, topological sort, Union-Find, Dijkstra, LCA, BST validation, Trie.",
+  },
+  {
+    id: "4",
+    name: "Recursion & DP",
+    weight: "high",
+    detail:
+      "Backtracking over subsets, combinations and permutations. Memoisation top-down, tabulation bottom-up, grid DP, knapsack variants, LIS, LCS, edit distance.",
+  },
+  {
+    id: "5",
+    name: "Complementary patterns",
+    weight: "medium",
+    detail:
+      "Interval merging, sweep line, linked lists, matrix traversal, bit manipulation, greedy with exchange arguments, Fisher-Yates, reservoir sampling.",
+  },
+  {
+    id: "6",
+    name: "Communication",
+    weight: "transversal",
+    detail:
+      "Narrating design decisions in English while writing. Handling incomplete statements, asking for the missing constraint, self-correcting mid-solution.",
+  },
+  {
+    id: "7",
+    name: "Metacognition",
+    weight: "transversal",
+    detail:
+      "Error analysis by category, transfer of learning, recall strategy, sustained attention across long sessions.",
+  },
+];
+
+const RULES = [
+  "Write first — never read a complete solution before attempting one.",
+  "Brute force before optimisation; articulating the naive approach counts.",
+  "Trace by hand against real inputs before declaring anything finished.",
+  "State time and space complexity with the reasoning, not just the notation.",
+  "Narrate continuously — silence past twenty seconds signals a gap.",
+];
+
+const WEIGHT_CLASS: Record<string, string> = {
+  maximum: "s-alert",
+  high: "s-warning",
+  medium: "s-healthy",
+  continuous: "s-healthy",
+  transversal: "s-healthy",
 };
 
-const STATUS_CLASS: Record<Track["status"], string> = {
-  active: "s-healthy",
-  recurring: "s-warning",
-  queued: "s-alert",
-};
+function CurriculumMap() {
+  return (
+    <svg
+      className="study-map"
+      viewBox="0 0 720 120"
+      role="img"
+      aria-label="Eight curriculum blocks, with graphs and trees carrying the highest weight"
+    >
+      {BLOCKS.map((b, i) => {
+        const x = 10 + i * 88;
+        const h = b.weight === "maximum" ? 74 : b.weight === "high" ? 54 : 34;
+        return (
+          <g key={b.id}>
+            <rect
+              x={x}
+              y={92 - h}
+              width={64}
+              height={h}
+              rx={4}
+              fill={b.weight === "maximum" ? "var(--phosphor)" : "var(--phosphor-deep)"}
+              opacity={b.weight === "maximum" ? 0.95 : 0.55}
+            />
+            <text x={x + 32} y={108} textAnchor="middle" className="study-map-label">
+              {b.id}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 function StudiesPage() {
   return (
     <main className="shell" style={{ paddingBlock: "clamp(3rem,7vw,5rem)" }}>
-      <p className="eyebrow">04 // study log</p>
-      <h1 className="section-title">Currently studying</h1>
-      <p className="section-note" style={{ maxWidth: "68ch" }}>
-        An open record of what I am working through and why. Tracks run in parallel and none of them
-        close — the status marks how much attention each is getting right now.
+      <p className="eyebrow">04 // study protocol</p>
+      <h1 className="section-title">Algorithms, under protocol</h1>
+      <p className="section-note" style={{ maxWidth: "70ch" }}>
+        A sequenced curriculum for building algorithmic proficiency — 60 topics across 8 blocks,
+        with the schedule derived from published findings on skill acquisition rather than from
+        intuition. The premise is that this is a trainable system property, measurable and
+        correctable like any other engineering outcome.
       </p>
 
-      <div className="studies-grid">
-        {TRACKS.map((track) => (
-          <article key={track.id} className="tile study-tile">
-            <div style={{ display: "flex", alignItems: "center", gap: "0.55rem" }}>
-              <span className={`dot ${STATUS_CLASS[track.status]}`} aria-hidden="true" />
-              <span style={{ fontSize: "0.62rem", letterSpacing: "0.2em", color: "var(--dim)" }}>
-                {STATUS_LABEL[track.status]}
-              </span>
-            </div>
+      <CurriculumMap />
 
-            <h2 className="tile-name">{track.title}</h2>
-            <p className="tile-desc">{track.premise}</p>
+      <section className="study-section">
+        <h2 className="study-h2">Theoretical basis</h2>
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          Four findings constrain the design. Each maps to a concrete mechanism rather than sitting
+          in a bibliography.
+        </p>
+        <div className="basis-grid">
+          {BASIS.map((b) => (
+            <article key={b.citation} className="tile basis-card">
+              <p className="basis-citation">{b.citation}</p>
+              <p className="basis-finding">{b.finding}</p>
+              <p className="tile-desc">{b.applied}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-            <ul className="study-list">
-              {track.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
+      <section className="study-section">
+        <h2 className="study-h2">Curriculum</h2>
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          Blocks are weighted by observed frequency, not by personal preference. Block 3 carries the
+          most weight because it earns it.
+        </p>
+        <div className="block-list">
+          {BLOCKS.map((b) => (
+            <article key={b.id} className="tile block-card">
+              <div className="block-head">
+                <span className="block-id">{b.id}</span>
+                <h3 className="block-name">{b.name}</h3>
+                <span className={`dot ${WEIGHT_CLASS[b.weight]}`} aria-hidden="true" />
+                <span className="block-weight">{b.weight}</span>
+              </div>
+              <p className="tile-desc">{b.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="study-section">
+        <h2 className="study-h2">Working conditions</h2>
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          Solutions are drafted in plain text — no IDE, no autocomplete, no compiler. Removing the
+          tooling is the point: it exposes precisely which parts of the language are known and which
+          were being carried. Sessions are timed at 45 minutes and scored across four dimensions —
+          problem solving, coding, communication and verification.
+        </p>
+        <ol className="rules-list">
+          {RULES.map((rule) => (
+            <li key={rule}>{rule}</li>
+          ))}
+        </ol>
+      </section>
+
+      <div style={{ display: "flex", justifyContent: "center", marginTop: "2.5rem" }}>
+        <a className="btn btn-primary" href={REPO} target="_blank" rel="noreferrer noopener">
+          Study repository ↗
+        </a>
       </div>
-
-      <p className="section-note" style={{ marginTop: "2.5rem", maxWidth: "68ch" }}>
-        Method, for anyone curious: concept first, then five questions of increasing difficulty,
-        then re-explaining the idea in plain language until the gaps stop showing. The last step is
-        the one that actually tells you whether you understood it.
-      </p>
     </main>
   );
 }

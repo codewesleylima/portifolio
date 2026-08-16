@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
  * long continuous stream, so a shuffle lands mid-set rather than at a track boundary —
  * which suits ambient background better than a playlist would.
  */
-const TRACKS = ["IjseQOHq_mU", "jfKfPfyJRdk", "4xDzrJKXOOY", "S_MOd40zlYU", "rPjez8z61rI"] as const;
+const TRACKS = ["IjseQOHq_mU", "Z-VfaG9ZN_U", "_tUBCmGBO3A", "AF8LSurfct4", "b0bRw1faiws"] as const;
 
 interface AmbientAudioProps {
   isMuted: boolean;

@@ -10,6 +10,8 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 import { Shuffle, Volume2, VolumeX } from "lucide-react";
 import NavMenu from "@/components/NavMenu";
+import LanguageMenu from "@/components/LanguageMenu";
+import { LocaleProvider, useLocale } from "@/lib/i18n";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -134,20 +136,24 @@ function SiteNav({
   onToggleMute: () => void;
   onShuffle: () => void;
 }) {
+  const { t } = useLocale();
   return (
     <nav className="site-nav no-print" aria-label="Main">
       <div className="shell site-nav-inner">
         {/* Menu anchors the left edge; sound sits at the far right; the brand and the
             two direct links keep the centre. */}
-        <NavMenu />
+        <div className="site-nav-left">
+          <NavMenu />
+          <LanguageMenu />
+        </div>
 
         <Link to="/" className="site-nav-brand">
           wesley lima
         </Link>
 
         <div className="site-nav-links">
-          <Link to="/">Console</Link>
-          <Link to="/resume">Resume</Link>
+          <Link to="/">{t("nav.console")}</Link>
+          <Link to="/resume">{t("nav.resume")}</Link>
           <button
             type="button"
             className="sound-toggle"
@@ -181,18 +187,20 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteNav
-        isMuted={isMuted}
-        onToggleMute={() => setIsMuted((m) => !m)}
-        onShuffle={() => setTrackNonce((n) => n + 1)}
-      />
-      <AmbientAudio
-        isMuted={isMuted}
-        trackNonce={trackNonce}
-        onFirstGesture={() => setIsMuted(false)}
-      />
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <LocaleProvider>
+        <SiteNav
+          isMuted={isMuted}
+          onToggleMute={() => setIsMuted((m) => !m)}
+          onShuffle={() => setTrackNonce((n) => n + 1)}
+        />
+        <AmbientAudio
+          isMuted={isMuted}
+          trackNonce={trackNonce}
+          onFirstGesture={() => setIsMuted(false)}
+        />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </LocaleProvider>
     </QueryClientProvider>
   );
 }
