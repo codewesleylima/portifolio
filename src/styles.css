@@ -885,11 +885,36 @@ select:focus-visible {
   border-bottom: 1px solid var(--line);
 }
 .site-nav-inner {
-  display: flex;
+  /* Three tracks, not space-between: the brand centres against the viewport
+     rather than against whatever the links happen to weigh. The empty first
+     track is what keeps it honest. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding-block: 0.7rem;
+}
+.site-nav-inner > a:first-child {
+  grid-column: 2;
+  justify-self: center;
+}
+.site-nav-inner > .site-nav-links {
+  grid-column: 3;
+  justify-self: end;
+}
+
+@media (max-width: 560px) {
+  /* Too narrow for three tracks: stack, both centred. */
+  .site-nav-inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.5rem;
+  }
+  .site-nav-inner > a:first-child,
+  .site-nav-inner > .site-nav-links {
+    grid-column: 1;
+    justify-self: center;
+  }
 }
 .site-nav a {
   font-family: var(--font-mono);

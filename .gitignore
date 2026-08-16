@@ -43,3 +43,8 @@ tsconfig.tsbuildinfo
 
 # Lovable sandbox worktree leftovers
 .workspace
+
+# Publishing pipeline inputs. novos-conteudos/ holds publicar.bat and the
+# vNN.zip payloads: tooling that drives deploys, never part of the codebase.
+# Only the code the payload carries gets committed.
+novos-conteudos/

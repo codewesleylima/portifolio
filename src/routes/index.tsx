@@ -43,17 +43,9 @@ function Index() {
     <main className="crt">
       {/* BOOT / HERO */}
       <header className="shell hero-shell" style={{ paddingBlock: "clamp(3rem,7vw,5.5rem)" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "1rem",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-          }}
-        >
-          <p className="eyebrow">{profile.login} // engineering console</p>
-        </div>
+        <p className="eyebrow" style={{ textAlign: "center" }}>
+          {profile.login} // engineering console
+        </p>
 
         {/* Centred identity block: mascot flanks the name, everything else
             stacks under it. The About panel gets the full width below. */}
