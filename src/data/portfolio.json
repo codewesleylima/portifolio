@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-16T18:20:00.290Z",
+  "generatedAt": "2026-08-16T18:28:44.287Z",
   "profile": {
     "login": "codewesleylima",
     "name": "Wesley Lima",
     "bio": "Software Engineer at the leading bank in Latin America.",
     "avatarUrl": "https://avatars.githubusercontent.com/u/126538277?u=13ea1174c44983a168bfa46a4b01ffd4ae236c26&v=4",
     "followers": 8,
-    "publicRepos": 50
+    "publicRepos": 49
   },
   "repos": [
     {
@@ -21,21 +21,21 @@
       "languages": [
         {
           "name": "TypeScript",
-          "percent": 84.4
+          "percent": 84.6
         },
         {
           "name": "CSS",
-          "percent": 13
+          "percent": 12.9
         },
         {
           "name": "JavaScript",
-          "percent": 2.6
+          "percent": 2.5
         }
       ],
       "topics": [],
       "stars": 0,
       "forks": 0,
-      "pushedAt": "2026-08-16T18:19:51Z",
+      "pushedAt": "2026-08-16T18:28:35Z",
       "createdAt": "2026-08-16T05:08:10Z",
       "isArchived": false,
       "isFork": false,
@@ -1145,39 +1145,6 @@
       "forks": 0,
       "pushedAt": "2024-02-21T04:28:45Z",
       "createdAt": "2024-02-21T04:28:44Z",
-      "isArchived": false,
-      "isFork": false,
-      "isPrivate": false,
-      "status": "alert"
-    },
-    {
-      "name": "meu-documento-web",
-      "description": null,
-      "url": "https://github.com/codewesleylima/meu-documento-web",
-      "homepageUrl": null,
-      "primaryLanguage": {
-        "name": "JavaScript",
-        "color": "#f1e05a"
-      },
-      "languages": [
-        {
-          "name": "JavaScript",
-          "percent": 80.1
-        },
-        {
-          "name": "CSS",
-          "percent": 15.5
-        },
-        {
-          "name": "MDX",
-          "percent": 4.4
-        }
-      ],
-      "topics": [],
-      "stars": 0,
-      "forks": 0,
-      "pushedAt": "2024-02-19T13:21:43Z",
-      "createdAt": "2024-02-14T22:18:32Z",
       "isArchived": false,
       "isFork": false,
       "isPrivate": false,
