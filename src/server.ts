@@ -68,6 +68,9 @@ async function handleLiveRepos(request: Request, env: unknown, ctx: unknown): Pr
       headers: {
         "content-type": "application/json; charset=utf-8",
         "cache-control": `public, max-age=${LIVE_TTL_SECONDS}`,
+        // Diagnostic: curl -I /api/repos tells you whether the token is wired up,
+        // instead of leaving a 503 to be guessed at.
+        "x-live-auth": token ? "token" : "anonymous",
       },
     });
 
@@ -82,7 +85,7 @@ async function handleLiveRepos(request: Request, env: unknown, ctx: unknown): Pr
     // 503 rather than 500: the client treats this as "keep the baked data" and the
     // page carries on with what it shipped with.
     console.error("live repos failed:", error);
-    return new Response(JSON.stringify({ error: "live read unavailable" }), {
+    return new Response(JSON.stringify({ error: "live read unavailable", detail: String(error) }), {
       status: 503,
       headers: {
         "content-type": "application/json; charset=utf-8",

@@ -1,164 +1,124 @@
+import baked from "@/data/portfolio.json";
+
 /**
  * Live repository read, used by /api/repos.
  *
- * The baked src/data/portfolio.json only changes when the daily sync runs AND the
- * site is redeployed, so flipping a repository between public and private could take
- * up to a day to show. This path asks GitHub at request time instead, behind a short
- * edge cache, so visibility changes surface within the TTL without a deploy.
+ * The baked dataset only changes when the sync runs AND the site is redeployed, so a
+ * repository flipped between public and private could show stale for hours. This asks
+ * GitHub at request time instead.
  *
- * The GraphQL query filters on privacy: PUBLIC, which is what makes the feature work
- * in both directions: a repo made private drops out of the response, and one made
- * public appears in it.
+ * Two decisions worth knowing about:
  *
- * The transform must stay in step with scripts/sync-github.mjs — same shape, same
- * status thresholds — because the client swaps one dataset for the other in place.
+ * 1. REST, not GraphQL. GraphQL rejects unauthenticated calls outright, which made the
+ *    whole feature depend on a Worker secret being set — and silently returned 503 when
+ *    it was not. The REST list endpoint serves public repositories without a token, so
+ *    this works on a fresh deploy. A token is still used when present, purely to lift
+ *    the rate limit from 60/hour to 5000/hour.
+ *
+ * 2. The live call answers one question only: which repositories are public right now.
+ *    Per-language breakdowns would cost one extra request per repository, so those are
+ *    read from the baked dataset and merged in. Language percentages drift slowly;
+ *    visibility does not.
+ *
+ * The Cache API is a no-op on workers.dev subdomains — the cache is zone-level and
+ * workers.dev has no zone — so the module-scope memo below is what actually limits
+ * upstream calls today. It lives as long as the isolate does. On a custom domain the
+ * Cache API starts working and the memo becomes a second layer.
  */
 
 const DAY = 24 * 60 * 60 * 1000;
 const LOGIN = "codewesleylima";
 
-/** Seconds the edge holds a response. Also the worst-case lag for a visibility flip. */
 export const LIVE_TTL_SECONDS = 300;
 
-const QUERY = `
-query($login: String!) {
-  user(login: $login) {
-    login
-    name
-    bio
-    avatarUrl
-    followers { totalCount }
-    repositories(
-      first: 100
-      privacy: PUBLIC
-      ownerAffiliations: OWNER
-      orderBy: { field: PUSHED_AT, direction: DESC }
-    ) {
-      totalCount
-      nodes {
-        name
-        description
-        url
-        homepageUrl
-        stargazerCount
-        forkCount
-        isArchived
-        isFork
-        isPrivate
-        pushedAt
-        createdAt
-        primaryLanguage { name color }
-        repositoryTopics(first: 12) { nodes { topic { name } } }
-        languages(first: 8, orderBy: { field: SIZE, direction: DESC }) {
-          totalSize
-          edges { size node { name color } }
-        }
-      }
-    }
-  }
-}`;
-
-interface GraphQLRepo {
+interface RestRepo {
   name: string;
   description: string | null;
-  url: string;
-  homepageUrl: string | null;
-  stargazerCount: number;
-  forkCount: number;
-  isArchived: boolean;
-  isFork: boolean;
-  isPrivate: boolean;
-  pushedAt: string;
-  createdAt: string;
-  primaryLanguage: { name: string; color: string } | null;
-  repositoryTopics: { nodes: { topic: { name: string } }[] };
-  languages: { totalSize: number; edges: { size: number; node: { name: string } }[] };
+  html_url: string;
+  homepage: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  archived: boolean;
+  fork: boolean;
+  private: boolean;
+  pushed_at: string;
+  created_at: string;
+  language: string | null;
+  topics?: string[];
 }
 
-function statusFor(repo: GraphQLRepo, now: number): "healthy" | "warning" | "alert" {
-  if (repo.isArchived) return "alert";
-  const age = now - new Date(repo.pushedAt).getTime();
-  if (age <= 90 * DAY) return "healthy";
-  if (age <= 365 * DAY) return "warning";
-  return "alert";
+type BakedRepo = (typeof baked)["repos"][number];
+
+const bakedByName = new Map(baked.repos.map((r) => [r.name, r as BakedRepo]));
+
+function statusFor(pushedAt: string, archived: boolean, now: number) {
+  if (archived) return "alert" as const;
+  const age = now - new Date(pushedAt).getTime();
+  if (age <= 90 * DAY) return "healthy" as const;
+  if (age <= 365 * DAY) return "warning" as const;
+  return "alert" as const;
 }
+
+let memo: { at: number; payload: unknown } | null = null;
 
 export async function fetchLivePortfolio(token: string | undefined) {
+  if (memo && Date.now() - memo.at < LIVE_TTL_SECONDS * 1000) return memo.payload;
+
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    Accept: "application/vnd.github+json",
     "User-Agent": "codewesleylima-portfolio-live",
   };
-  // Unauthenticated GraphQL is rejected outright, so without a token there is
-  // nothing to try — the caller falls back to the baked dataset.
-  if (!token) throw new Error("no token");
-  headers["Authorization"] = `Bearer ${token}`;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const response = await fetch("https://api.github.com/graphql", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ query: QUERY, variables: { login: LOGIN } }),
-  });
+  const response = await fetch(
+    `https://api.github.com/users/${LOGIN}/repos?per_page=100&type=owner&sort=pushed`,
+    { headers },
+  );
 
   if (!response.ok) throw new Error(`GitHub responded ${response.status}`);
 
-  const payload = (await response.json()) as {
-    errors?: unknown[];
-    data?: { user?: Record<string, never> };
-  };
-  if (payload.errors?.length) throw new Error("GraphQL error");
+  const all = (await response.json()) as RestRepo[];
+  if (!Array.isArray(all)) throw new Error("unexpected payload");
 
-  const user = payload.data?.user as
-    | {
-        login: string;
-        name: string | null;
-        bio: string | null;
-        avatarUrl: string;
-        followers: { totalCount: number };
-        repositories: { totalCount: number; nodes: GraphQLRepo[] };
-      }
-    | undefined;
+  const publicRepos = all.filter((r) => !r.private);
 
-  if (!user) throw new Error("user not found");
-
-  // Refusing an empty result is deliberate: an empty list is indistinguishable from
-  // "every repo went private", and silently blanking the registry is worse than
-  // showing slightly stale data.
-  if (user.repositories.nodes.length === 0) throw new Error("zero repositories");
+  // An empty list is indistinguishable from "every repository went private", and
+  // blanking the registry is worse than showing data a few minutes old.
+  if (publicRepos.length === 0) throw new Error("zero repositories");
 
   const now = Date.now();
 
-  return {
+  const payload = {
     generatedAt: new Date(now).toISOString(),
-    profile: {
-      login: user.login,
-      name: user.name ?? user.login,
-      bio: user.bio ?? "",
-      avatarUrl: user.avatarUrl,
-      followers: user.followers.totalCount,
-      publicRepos: user.repositories.totalCount,
-    },
-    repos: user.repositories.nodes.map((r) => {
-      const total = r.languages.totalSize || 1;
+    profile: { ...baked.profile, publicRepos: publicRepos.length },
+    repos: publicRepos.map((r) => {
+      const prev = bakedByName.get(r.name);
       return {
         name: r.name,
         description: r.description,
-        url: r.url,
-        homepageUrl: r.homepageUrl,
-        primaryLanguage: r.primaryLanguage,
-        languages: r.languages.edges.map((e) => ({
-          name: e.node.name,
-          percent: Math.round((e.size / total) * 1000) / 10,
-        })),
-        topics: r.repositoryTopics.nodes.map((n) => n.topic.name),
-        stars: r.stargazerCount,
-        forks: r.forkCount,
-        pushedAt: r.pushedAt,
-        createdAt: r.createdAt,
-        isArchived: r.isArchived,
-        isFork: r.isFork,
-        isPrivate: r.isPrivate,
-        status: statusFor(r, now),
+        url: r.html_url,
+        homepageUrl: r.homepage,
+        // The REST list gives a language name but no colour; the baked entry has both.
+        primaryLanguage:
+          prev?.primaryLanguage?.name === r.language
+            ? prev.primaryLanguage
+            : r.language
+              ? { name: r.language, color: "#6b7a80" }
+              : null,
+        languages: prev?.languages ?? [],
+        topics: r.topics ?? prev?.topics ?? [],
+        stars: r.stargazers_count,
+        forks: r.forks_count,
+        pushedAt: r.pushed_at,
+        createdAt: r.created_at,
+        isArchived: r.archived,
+        isFork: r.fork,
+        isPrivate: false,
+        status: statusFor(r.pushed_at, r.archived, now),
       };
     }),
   };
+
+  memo = { at: now, payload };
+  return payload;
 }
