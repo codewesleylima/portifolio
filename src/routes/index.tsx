@@ -70,7 +70,7 @@ function Index() {
             display: "grid",
             gap: "1.6rem",
             gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-            marginTop: "1.8rem",
+            marginTop: "1.1rem",
             alignItems: "start",
           }}
         >
@@ -93,11 +93,10 @@ function Index() {
                 Email
               </a>
             </div>
+            <Mascot booted={booted} />
           </div>
           <AboutMe onBooted={onBooted} />
         </div>
-
-        <Mascot booted={booted} />
       </header>
 
       {/* SERVICES */}

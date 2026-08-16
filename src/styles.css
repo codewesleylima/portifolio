@@ -666,13 +666,22 @@ select:focus-visible {
 }
 
 .mascot {
-  order: 99;
+  /* Lives inside the hero's left column, under the CTA row: the column ends
+     early next to the tall About panel, and the sprite fills that void. */
   position: relative;
-  width: clamp(180px, 22vw, 320px);
-  align-self: flex-start;
-  margin-top: -1.5rem;
+  width: clamp(180px, 20vw, 280px);
+  margin-top: 2rem;
   line-height: 0;
   pointer-events: none;
+}
+
+@media (max-width: 860px) {
+  /* Single-column layout: keep it small so it never pushes the About panel
+     below the fold on a phone. */
+  .mascot {
+    width: clamp(140px, 40vw, 200px);
+    margin-top: 1.5rem;
+  }
 }
 
 .mascot-sprite,
@@ -1332,6 +1341,7 @@ select:focus-visible {
 
 /* ---------- about panel ---------- */
 .about-panel {
+  margin-top: -0.6rem;
   display: grid;
   gap: 1rem;
 }
