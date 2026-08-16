@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as ResumeRouteImport } from './routes/resume'
+import { Route as StudiesRouteImport } from './routes/studies'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecommendationsRoute = RecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResumeRoute = ResumeRouteImport.update({
@@ -22,31 +29,44 @@ const ResumeRoute = ResumeRouteImport.update({
   path: '/resume',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudiesRoute = StudiesRouteImport.update({
+  id: '/studies',
+  path: '/studies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
+  '/studies': typeof StudiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
+  '/studies': typeof StudiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
+  '/studies': typeof StudiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/resume'
+  fullPaths: '/' | '/recommendations' | '/resume' | '/studies'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/resume'
-  id: '__root__' | '/' | '/resume'
+  to: '/' | '/recommendations' | '/resume' | '/studies'
+  id: '__root__' | '/' | '/recommendations' | '/resume' | '/studies'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RecommendationsRoute: typeof RecommendationsRoute
   ResumeRoute: typeof ResumeRoute
+  StudiesRoute: typeof StudiesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recommendations': {
+      id: '/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof RecommendationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resume': {
       id: '/resume'
       path: '/resume'
@@ -65,12 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResumeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/studies': {
+      id: '/studies'
+      path: '/studies'
+      fullPath: '/studies'
+      preLoaderRoute: typeof StudiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RecommendationsRoute: RecommendationsRoute,
   ResumeRoute: ResumeRoute,
+  StudiesRoute: StudiesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

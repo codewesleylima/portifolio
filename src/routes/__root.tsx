@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import NavMenu from "@/components/NavMenu";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -143,6 +144,7 @@ function SiteNav({ isMuted, onToggleMute }: { isMuted: boolean; onToggleMute: ()
           </button>
           <Link to="/">Console</Link>
           <Link to="/resume">Resume</Link>
+          <NavMenu />
         </div>
       </div>
     </nav>

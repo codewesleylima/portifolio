@@ -1550,3 +1550,216 @@ select:focus-visible {
   line-height: 1.7;
   margin: 0;
 }
+
+/* ---------- options menu ---------- */
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--phosphor) 45%, transparent);
+  border-radius: 8px;
+  color: var(--phosphor);
+}
+.nav-menu-trigger:hover,
+.nav-menu-trigger.is-open {
+  border-color: var(--phosphor);
+  box-shadow: var(--bloom-phosphor);
+}
+
+.nav-menu-bars {
+  display: grid;
+  gap: 4px;
+  width: 15px;
+}
+.nav-menu-bars > span {
+  display: block;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+/* The middle bar is short so the icon reads as a control rather than a generic
+   hamburger, and it telegraphs "options" the way a slider stack does. */
+.nav-menu-bars > span:nth-child(2) {
+  width: 68%;
+  justify-self: end;
+}
+
+.nav-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  z-index: 60;
+  min-width: 260px;
+  display: grid;
+  padding: 0.4rem;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--phosphor-deep) 55%, var(--line));
+  border-radius: 12px;
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.9);
+}
+
+.nav-menu-item {
+  display: grid;
+  gap: 2px;
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  text-decoration: none;
+}
+.nav-menu-item:hover,
+.nav-menu-item:focus-visible {
+  background: color-mix(in srgb, var(--phosphor-deep) 22%, transparent);
+}
+.nav-menu-item.is-active .nav-menu-label {
+  color: var(--phosphor);
+}
+
+.nav-menu-label {
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #eaf6f2;
+}
+.nav-menu-note {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--dim);
+}
+
+/* ---------- studies ---------- */
+.studies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+.study-tile .tile-name {
+  margin-top: 0.5rem;
+}
+.study-list {
+  margin: 0.9rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+.study-list li {
+  color: #b9c8c9;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.study-list li::marker {
+  color: var(--phosphor);
+}
+
+/* ---------- recommendations ---------- */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+.rec-card {
+  margin: 0;
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+.rec-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.rec-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--phosphor);
+  background: color-mix(in srgb, var(--phosphor-deep) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--phosphor) 40%, transparent);
+}
+.rec-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: #eaf6f2;
+}
+.rec-role {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--dim);
+}
+.rec-body {
+  margin: 0;
+  padding-left: 0.9rem;
+  border-left: 2px solid color-mix(in srgb, var(--phosphor) 40%, transparent);
+  display: grid;
+  gap: 0.6rem;
+}
+.rec-body p {
+  margin: 0;
+  color: #b9c8c9;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.rec-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  border-top: 1px solid var(--line);
+  padding-top: 0.7rem;
+}
+
+/* ---------- arcade scores ---------- */
+.arcade-scores {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  color: var(--dim);
+}
+.arcade-scores ol {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.arcade-scores li {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.arcade-scores li.is-best {
+  color: var(--phosphor);
+  border-color: color-mix(in srgb, var(--phosphor) 50%, transparent);
+}
+.arcade-scores-label {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.arcade-scores-label:last-child {
+  margin-left: auto;
+}

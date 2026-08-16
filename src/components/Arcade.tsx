@@ -17,6 +17,9 @@ const JUMP = -10.6;
 const BASE_SPEED = 3.2;
 const MAX_SPEED = 5.8;
 
+const STORAGE_KEY = "debug-run:scores";
+const RUN_HISTORY = 5;
+
 const LABELS = ["NPE", "TIMEOUT", "5XX", "OOM", "DEADLOCK"];
 
 /** DEBUG RUN — a tiny keyboard/tap runner. Jump the incidents, keep uptime green. */
@@ -25,6 +28,7 @@ export default function Arcade() {
   const [state, setState] = useState<State>("idle");
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
+  const [runs, setRuns] = useState<number[]>([]);
 
   const game = useRef({
     y: GROUND,
@@ -36,6 +40,21 @@ export default function Arcade() {
     raf: 0,
     dead: false,
   });
+
+  // Scores persist per browser. There is no backend and no account, so this is a
+  // personal record rather than a leaderboard — claiming otherwise would be a lie
+  // the first time someone opened the site on a second device.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { best?: number; runs?: number[] };
+      if (typeof saved.best === "number") setBest(saved.best);
+      if (Array.isArray(saved.runs)) setRuns(saved.runs.slice(0, RUN_HISTORY));
+    } catch {
+      /* private mode, disabled storage, corrupted value — play without history */
+    }
+  }, []);
 
   const jump = useCallback(() => {
     const g = game.current;
@@ -147,6 +166,18 @@ export default function Arcade() {
         setState("over");
         setScore((s) => {
           setBest((b) => Math.max(b, s));
+          setRuns((prev) => {
+            const next = [s, ...prev].slice(0, RUN_HISTORY);
+            try {
+              window.localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ best: Math.max(...next), runs: next }),
+              );
+            } catch {
+              /* storage unavailable — the run still counts for this session */
+            }
+            return next;
+          });
           return s;
         });
         return;
@@ -185,6 +216,22 @@ export default function Arcade() {
           uptime {String(score).padStart(4, "0")} · best {String(best).padStart(4, "0")}
         </span>
       </div>
+
+      {runs.length > 0 && (
+        <div className="arcade-scores">
+          <span className="arcade-scores-label">last runs</span>
+          <ol>
+            {runs.map((run, i) => (
+              <li key={i} className={run === best ? "is-best" : ""}>
+                {String(run).padStart(4, "0")}
+              </li>
+            ))}
+          </ol>
+          <span className="arcade-scores-label">
+            {runs.length} {runs.length === 1 ? "run" : "runs"}
+          </span>
+        </div>
+      )}
 
       <div
         className="arcade-stage"

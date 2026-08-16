@@ -86,8 +86,10 @@ function Index() {
           </p>
 
           <p className="hero-thesis">
-            I keep money-moving systems boringly reliable: event-driven Java services, hard latency
-            budgets, and observability that catches incidents before customers do.
+            Backend engineer working on software engineering and architecture for the Personal
+            Insurance systems at Itaú Unibanco. My work covers backend development, code review,
+            acting on what observability and metrics surface, and driving discussions on solution
+            design and engineering practice — increasingly with AI in the loop.
           </p>
 
           <div className="hero-actions">
@@ -174,6 +176,13 @@ function Index() {
             {publicRepos.length} public repos · {profile.followers} followers
           </span>
           <span>© {new Date(generatedAt).getUTCFullYear()} Wesley Lima</span>
+          <a
+            href="https://github.com/codewesleylima/portifolio/blob/main/LICENSE"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            License
+          </a>
         </div>
       </footer>
     </main>

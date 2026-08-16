@@ -1,4 +1,19 @@
+<div align="center">
+
+<img src="public/mascot.png" alt="Pixel-art engineer at a CRT workstation" width="180" />
+
 # codewesleylima — engineering console
+
+**Wesley Lima** · Backend Software Engineer II @ Itaú Unibanco · São Paulo, Brazil
+
+[![Portfolio](https://img.shields.io/badge/live-portfolio--wesley--lima.engwesley.workers.dev-FF6A1A?style=flat-square&labelColor=080A0C)](https://portfolio-wesley-lima.engwesley.workers.dev)
+[![GitHub](https://img.shields.io/badge/github-codewesleylima-FF6A1A?style=flat-square&labelColor=080A0C&logo=github)](https://github.com/codewesleylima)
+[![LinkedIn](https://img.shields.io/badge/linkedin-wesslima-FF6A1A?style=flat-square&labelColor=080A0C&logo=linkedin)](https://linkedin.com/in/wesslima)
+[![License](https://img.shields.io/badge/license-see%20LICENSE-FF6A1A?style=flat-square&labelColor=080A0C)](LICENSE)
+
+</div>
+
+---
 
 A personal portfolio built as a **service health console**: every GitHub repository renders as a
 service tile with a status strip, last-deploy timestamp, runtime badge and topic labels.
@@ -9,12 +24,13 @@ framework drives the visual identity.
 ## Run locally
 
 ```bash
-npm install
-npm run dev      # http://localhost:8080
-npm run build    # static build output in dist/
+bun install --frozen-lockfile
+bun run dev      # http://localhost:3000
+bun run build    # Nitro cloudflare-module output in .output/
 ```
 
-Drop your résumé at `public/wesley-lima-resume.pdf` — the hero CTA links to it.
+`bun.lock` is the authoritative lockfile — `npm ci` fails on this tree over a
+transitive `ajv` conflict.
 
 ## How the sync works
 
@@ -61,3 +77,16 @@ sequence, staggered tile reveal, 120ms glitch on tile hover, ambient pulse on he
 fully disabled under `prefers-reduced-motion`.
 
 The mascot is an original ASCII console daemon; no third-party marks or characters are used.
+
+## Author
+
+**Wesley Lima** — Backend Software Engineer II at Itaú Unibanco, working on Personal
+Insurance systems. Java, Spring Boot and AWS, with depth in event-driven architecture,
+observability and FinOps.
+
+[github.com/codewesleylima](https://github.com/codewesleylima) ·
+[linkedin.com/in/wesslima](https://linkedin.com/in/wesslima)
+
+## License
+
+See [LICENSE](https://github.com/codewesleylima/portifolio/blob/main/LICENSE).
