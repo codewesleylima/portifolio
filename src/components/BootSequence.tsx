@@ -11,7 +11,7 @@ const LINES = [
 ];
 
 interface Props {
-  onBooted?: () => void;
+  onBooted?: (() => void) | undefined;
 }
 
 /** Types out the system check, then hands control to the console. */

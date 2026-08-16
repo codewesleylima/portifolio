@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
-import BootSequence from "@/components/BootSequence";
+import AboutMe from "@/components/AboutMe";
+import Arcade from "@/components/Arcade";
 import Mascot from "@/components/Mascot";
 import DeployLog from "@/components/DeployLog";
 import ServiceConsole from "@/components/ServiceConsole";
@@ -93,13 +94,28 @@ function Index() {
               </a>
             </div>
           </div>
-          <BootSequence onBooted={onBooted} />
+          <AboutMe onBooted={onBooted} />
         </div>
 
         <Mascot booted={booted} />
       </header>
 
       {/* SERVICES */}
+      {/* ARCADE */}
+      <section className="section" id="arcade">
+        <div className="shell">
+          <p className="eyebrow">00 // arcade</p>
+          <h2 className="section-title">Debug run</h2>
+          <p className="section-note">
+            A break from the dashboards: hop over incidents and keep the service up. Space, arrow up
+            or tap to jump.
+          </p>
+          <div style={{ marginTop: "1.8rem" }}>
+            <Arcade />
+          </div>
+        </div>
+      </section>
+
       <section className="section" id="services">
         <div className="shell">
           <p className="eyebrow">01 // registry</p>
