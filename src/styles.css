@@ -1599,11 +1599,18 @@ select:focus-visible {
 }
 
 .nav-menu-panel {
+  /* Anchored left, because both triggers live at the left edge of the bar. It was
+     still anchored right from when the menu sat on the right, which pushed a 260px
+     panel entirely off the left of the viewport. */
   position: absolute;
   top: calc(100% + 0.6rem);
-  right: 0;
+  left: 0;
+  right: auto;
   z-index: 60;
   min-width: 260px;
+  /* Never wider than the viewport, whatever the trigger's position. */
+  max-width: min(320px, calc(100vw - 1.5rem));
+  box-sizing: border-box;
   display: grid;
   padding: 0.4rem;
   background: var(--surface);
@@ -1615,6 +1622,8 @@ select:focus-visible {
 .nav-menu-item {
   display: grid;
   gap: 2px;
+  /* Long translated labels must wrap instead of forcing the panel wider. */
+  overflow-wrap: anywhere;
   padding: 0.6rem 0.7rem;
   border-radius: 8px;
   text-decoration: none;
@@ -1637,6 +1646,7 @@ select:focus-visible {
 .nav-menu-note {
   font-family: var(--font-mono);
   font-size: 0.64rem;
+  line-height: 1.45;
   color: var(--dim);
 }
 
@@ -1803,8 +1813,6 @@ select:focus-visible {
   gap: 0.5rem;
 }
 .lang-panel {
-  left: 0;
-  right: auto;
   min-width: 200px;
   max-height: 320px;
   overflow-y: auto;
@@ -2205,4 +2213,70 @@ select:focus-visible {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ---------- dimension fixes for translated text ---------- */
+/* Translated strings run longer than the English they replace — German and Portuguese
+   routinely by a third. Anything sized for English copy needs to wrap or shrink
+   instead of overflowing its container. */
+
+.btn {
+  white-space: normal;
+  text-align: center;
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+}
+
+.tile-name,
+.block-name,
+.rec-name,
+.challenge-title,
+.current-topic {
+  overflow-wrap: anywhere;
+}
+
+.metric-value {
+  /* Five metrics on one row: a long value must shrink rather than push the row wide. */
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  overflow-wrap: anywhere;
+}
+
+.arcade-scores {
+  flex-wrap: wrap;
+}
+.arcade-scores-label:last-child {
+  margin-left: 0;
+}
+
+.challenge-results li {
+  overflow-wrap: anywhere;
+}
+.challenge-expect {
+  margin-left: 0;
+}
+
+.meta-row,
+.rec-meta,
+.exercise-head {
+  overflow-wrap: anywhere;
+}
+
+.chip,
+.label-chip,
+.badge {
+  white-space: normal;
+}
+
+@media (max-width: 480px) {
+  .metric-row {
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  }
+  .challenge-editor {
+    font-size: 0.72rem;
+  }
 }
