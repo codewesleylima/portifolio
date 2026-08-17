@@ -26,14 +26,100 @@ const SKIP_TAGS = new Set([
 
 const SKIP_SELECTOR = "[data-no-translate]";
 
+/**
+ * Names and terms that must survive untouched.
+ *
+ * Every corruption observed in production landed on one of these: the brand read back
+ * as an MD5 plus a translation-memory filename, and project names came back the same
+ * way. Providers answer short unknown strings with an internal reference instead of
+ * declining, so the only reliable defence is never sending them.
+ */
+const NEVER_TRANSLATE = [
+  "wesley lima",
+  "wesley",
+  "lima",
+  "codewesleylima",
+  "itaú unibanco",
+  "itau unibanco",
+  "cazé tv",
+  "project ecommerce",
+  "library management",
+  "people operations",
+  "microservices lab",
+  "platform foundations",
+  "debug run",
+  "console",
+  "boot.log",
+  "about.me",
+  "arcade",
+  "github",
+  "linkedin",
+  "leetcode",
+  "cloudflare",
+  "datadog",
+  "spring boot",
+  "java",
+  "aws",
+  "kafka",
+  "docker",
+  "kubernetes",
+  "terraform",
+  "postgresql",
+  "mongodb",
+  "redis",
+  "dynamodb",
+  "grafana",
+  "cloudwatch",
+  "finops",
+  "fiap",
+  "résumé",
+  "resume",
+  "email",
+];
+
+const neverSet = new Set(NEVER_TRANSLATE);
+
+/**
+ * Rejects a provider response that is not a translation.
+ *
+ * Providers do not always fail loudly. A 200 can carry a translation-memory id, a
+ * filename, or a quota notice, and writing any of those onto the page is worse than
+ * leaving the sentence in English.
+ */
+export function looksLikeGarbage(source: string, translated: string) {
+  if (!translated.trim()) return true;
+  if (/[0-9a-f]{16,}/i.test(translated)) return true; // hash-shaped token
+  if (/\.(md|json|txt|xml|tmx|csv)\b/i.test(translated)) return true; // filename
+  if (/MYMEMORY|QUERY LENGTH|QUOTA|API KEY|INVALID/i.test(translated)) return true;
+  // A translation many times longer than its source is a payload, not a sentence.
+  if (translated.length > source.length * 6 + 40) return true;
+  return false;
+}
+
 /** Strings that would only be corrupted by translation. */
 function shouldTranslate(text: string) {
   const trimmed = text.trim();
   if (trimmed.length < 3) return false;
+  if (neverSet.has(trimmed.toLowerCase())) return false;
+  // Proper nouns are what providers corrupt: a short capitalised phrase with no
+  // sentence punctuation is far more likely to be a name than a sentence.
+  if (trimmed.length < 26 && /^[A-Z][\w\s&·.-]*$/.test(trimmed) && !/[.!?,;:]/.test(trimmed)) {
+    // Two or three capitalised words with no punctuation: almost always a name
+    // ("Project Ecommerce", "People Operations"). A single capitalised word is far
+    // more often an ordinary heading — "Services", "Progress" — and product names
+    // that happen to be one word are covered by the list above.
+    const words = trimmed.split(/\s+/);
+    if (words.length >= 2 && words.length <= 3 && words.every((w) => /^[A-Z]/.test(w))) {
+      return false;
+    }
+  }
+  return true;
   // No letters at all: numbers, timestamps, separators, arrows.
   if (!/\p{L}/u.test(trimmed)) return false;
-  // Identifiers and paths: repo names, file names, kebab and snake case.
-  if (/^[\w./-]+$/.test(trimmed) && !/\s/.test(trimmed)) return false;
+  // Identifiers and paths: repo names, file names, kebab and snake case. Requires a
+  // separator or a digit — without that condition this also swallowed ordinary
+  // single-word headings like "Services" and "Progress".
+  if (!/\s/.test(trimmed) && /[./_\-\d]/.test(trimmed)) return false;
   return true;
 }
 
@@ -166,11 +252,12 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
   const pending = new Set<string>();
   for (const node of nodes) {
     const source = originals.get(node) ?? "";
-    const hit = memory.get(cacheKey(locale, source.trim()));
-    if (hit) {
-      node.nodeValue = source.replace(source.trim(), hit);
+    const trimmed = source.trim();
+    const hit = memory.get(cacheKey(locale, trimmed));
+    if (hit && !looksLikeGarbage(trimmed, hit)) {
+      node.nodeValue = source.replace(trimmed, hit);
     } else {
-      pending.add(source.trim());
+      pending.add(trimmed);
     }
   }
 
@@ -181,27 +268,45 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
 
   try {
     const list = [...pending];
-    // Chunked so one oversized request cannot fail the whole page, and so partial
-    // results land progressively instead of all-or-nothing.
     const CHUNK = 20;
+
+    /**
+     * Everything is collected before anything is written.
+     *
+     * Applying chunk by chunk meant a provider failing partway left the page half
+     * translated — a Japanese heading over an English paragraph, which reads as broken
+     * rather than as untranslated. Gathering first makes the outcome binary: the page
+     * switches language completely, or it stays in English.
+     */
+    const gathered: Record<string, string> = {};
+
     for (let i = 0; i < list.length; i += CHUNK) {
       if (token !== runToken) return; // a newer locale switch superseded this run
       const slice = list.slice(i, i + CHUNK);
       const translations = await requestTranslations(slice, locale);
 
       for (const [source, translated] of Object.entries(translations)) {
-        memory.set(cacheKey(locale, source), translated);
+        if (looksLikeGarbage(source, translated)) continue;
+        gathered[source] = translated;
       }
-      writeCache(locale, translations);
+    }
 
-      for (const node of nodes) {
-        const source = (originals.get(node) ?? "").trim();
-        const translated = translations[source];
-        if (translated) {
-          const raw = originals.get(node) ?? "";
-          node.nodeValue = raw.replace(source, translated);
-        }
-      }
+    if (token !== runToken) return;
+
+    for (const [source, translated] of Object.entries(gathered)) {
+      memory.set(cacheKey(locale, source), translated);
+    }
+    writeCache(locale, gathered);
+
+    // Re-collected rather than reusing the earlier list: React may have replaced
+    // nodes while the requests were in flight, and writing to detached nodes is
+    // invisible work.
+    for (const node of collect(root)) {
+      if (!originals.has(node)) originals.set(node, node.nodeValue ?? "");
+      const raw = originals.get(node) ?? "";
+      const source = raw.trim();
+      const translated = gathered[source] ?? memory.get(cacheKey(locale, source));
+      if (translated) node.nodeValue = raw.replace(source, translated);
     }
   } catch (error) {
     console.error("translation unavailable:", error);
