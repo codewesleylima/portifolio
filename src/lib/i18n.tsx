@@ -38,7 +38,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "Resume",
     "nav.studies": "Studies",
     "nav.recommendations": "Recommendations",
-    "nav.channel": "Channel",
+    "nav.channel": "Media",
     "nav.console": "Console",
     "nav.options": "Options",
     "nav.language": "Language",
@@ -61,7 +61,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "Currículo",
     "nav.studies": "Estudos",
     "nav.recommendations": "Recomendações",
-    "nav.channel": "Canal",
+    "nav.channel": "Mídia",
     "nav.console": "Console",
     "nav.options": "Opções",
     "nav.language": "Idioma",
@@ -107,7 +107,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "CV",
     "nav.studies": "Études",
     "nav.recommendations": "Recommandations",
-    "nav.channel": "Chaîne",
+    "nav.channel": "Médias",
     "nav.console": "Console",
     "nav.options": "Options",
     "nav.language": "Langue",
@@ -130,7 +130,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "Lebenslauf",
     "nav.studies": "Studium",
     "nav.recommendations": "Empfehlungen",
-    "nav.channel": "Kanal",
+    "nav.channel": "Medien",
     "nav.console": "Konsole",
     "nav.options": "Optionen",
     "nav.language": "Sprache",
@@ -153,7 +153,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "Curriculum",
     "nav.studies": "Studi",
     "nav.recommendations": "Raccomandazioni",
-    "nav.channel": "Canale",
+    "nav.channel": "Media",
     "nav.console": "Console",
     "nav.options": "Opzioni",
     "nav.language": "Lingua",
@@ -176,7 +176,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "简历",
     "nav.studies": "学习",
     "nav.recommendations": "推荐",
-    "nav.channel": "频道",
+    "nav.channel": "媒体",
     "nav.console": "控制台",
     "nav.options": "选项",
     "nav.language": "语言",
@@ -199,7 +199,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "経歴",
     "nav.studies": "学習",
     "nav.recommendations": "推薦",
-    "nav.channel": "チャンネル",
+    "nav.channel": "メディア",
     "nav.console": "コンソール",
     "nav.options": "オプション",
     "nav.language": "言語",
@@ -222,7 +222,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "이력서",
     "nav.studies": "학습",
     "nav.recommendations": "추천",
-    "nav.channel": "채널",
+    "nav.channel": "미디어",
     "nav.console": "콘솔",
     "nav.options": "옵션",
     "nav.language": "언어",
@@ -245,7 +245,7 @@ const STRINGS: Record<Locale, Dict> = {
     "nav.resume": "Резюме",
     "nav.studies": "Обучение",
     "nav.recommendations": "Рекомендации",
-    "nav.channel": "Канал",
+    "nav.channel": "Медиа",
     "nav.console": "Консоль",
     "nav.options": "Опции",
     "nav.language": "Язык",
@@ -301,11 +301,21 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = locale;
 
-    // Runs after paint so the dictionary strings are already in the DOM and get
-    // skipped as cache hits rather than re-translated. Re-runs on navigation because
-    // a new route renders fresh English text under the same locale.
-    const id = window.setTimeout(() => void translatePage(locale), 60);
-    return () => window.clearTimeout(id);
+    /**
+     * Several sweeps rather than one.
+     *
+     * A single pass 60ms after the switch misses anything that mounts later: the About
+     * panel, the boot sequence, the live repository fetch resolving, a route's content
+     * arriving. The MutationObserver is meant to catch those, but it only fires on
+     * mutations it observes — content already rendered between the switch and the
+     * observer being attached is invisible to it. Repeating the sweep closes that
+     * window, and repeats are free because everything already translated is a cache
+     * hit with no request behind it.
+     */
+    const ids = [60, 500, 1400, 3000].map((delay) =>
+      window.setTimeout(() => void translatePage(locale), delay),
+    );
+    return () => ids.forEach((id) => window.clearTimeout(id));
   }, [locale, pathname]);
 
   const setLocale = (next: Locale) => {

@@ -6,7 +6,7 @@ const ITEMS = [
   { to: "/resume", label: "Resume", note: "Experience and background" },
   { to: "/studies", label: "Studies", note: "What I am working through now" },
   { to: "/recommendations", label: "Recommendations", note: "What colleagues have written" },
-  { to: "/channel", label: "Channel", note: "Walkthroughs and technical talks" },
+  { to: "/channel", label: "Media", note: "Video and short-form posts" },
 ] as const;
 
 /**

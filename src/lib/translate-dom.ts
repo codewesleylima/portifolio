@@ -261,7 +261,11 @@ function ensureObserver() {
  * in a WeakMap rather than re-fetched. Any failure in the upstream call leaves the page
  * exactly as it is — a half-translated page is worse than an untranslated one.
  */
-export async function translatePage(locale: Locale, root: HTMLElement = document.body) {
+export async function translatePage(
+  locale: Locale,
+  root: HTMLElement = document.body,
+  attempt = 0,
+) {
   const token = ++runToken;
   activeLocale = locale;
   ensureObserver();
@@ -318,8 +322,40 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
   }
 
   try {
-    const list = [...pending];
-    const CHUNK = 20;
+    /**
+     * Batches are sized by encoded length, not by item count.
+     *
+     * A fixed count of twenty was the reason long prose never translated while the
+     * menu did. The provider takes its input as repeated query parameters, so twenty
+     * paragraphs of two hundred characters build a URL of several thousand — past
+     * what the request survives. Short strings fit and came back translated; the
+     * About panel and the hero paragraph did not, and failed silently.
+     *
+     * Anything longer than the budget on its own is sent alone rather than dropped.
+     */
+    const URL_BUDGET = 1400;
+
+    const batches: string[][] = [];
+    let batch: string[] = [];
+    let weight = 0;
+
+    // A single paragraph past the budget still has to go somewhere. Sending it alone
+    // works up to the provider's own per-string ceiling; beyond that it is dropped
+    // rather than returned mangled, and the English stays.
+    const MAX_SINGLE = 4000;
+    const sendable = [...pending].filter((t) => encodeURIComponent(t).length <= MAX_SINGLE);
+
+    for (const text of sendable) {
+      const cost = encodeURIComponent(text).length + 4;
+      if (batch.length > 0 && (weight + cost > URL_BUDGET || batch.length >= 20)) {
+        batches.push(batch);
+        batch = [];
+        weight = 0;
+      }
+      batch.push(text);
+      weight += cost;
+    }
+    if (batch.length > 0) batches.push(batch);
 
     /**
      * Everything is collected before anything is written.
@@ -332,9 +368,8 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
     const gathered: Record<string, string> = {};
 
     let failed = 0;
-    for (let i = 0; i < list.length; i += CHUNK) {
+    for (const slice of batches) {
       if (token !== runToken) return; // a newer locale switch superseded this run
-      const slice = list.slice(i, i + CHUNK);
       try {
         const translations = await requestTranslations(slice, locale);
         for (const [source, translated] of Object.entries(translations)) {
@@ -348,10 +383,12 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
       }
     }
 
-    if (failed > 0 && token === runToken) {
-      // Backs off, then lets the observer path pick up what is still missing. The
-      // successful strings are already cached, so a retry only asks for the gaps.
-      window.setTimeout(() => void translatePage(locale, root), 1200);
+    if (failed > 0 && token === runToken && attempt < 3) {
+      // Backs off and retries only the gaps — everything that succeeded is cached, so
+      // a retry costs a fraction of the first pass. Capped so a provider that is down
+      // does not retry forever.
+      const delay = 1200 * (attempt + 1);
+      window.setTimeout(() => void translatePage(locale, root, attempt + 1), delay);
     }
 
     if (token !== runToken) return;

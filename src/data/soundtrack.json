@@ -1,0 +1,4 @@
+{
+  "selfHosted": [],
+  "note": "Drop CC0 or CC-BY lofi files in public/audio and list their paths here, e.g. \"/audio/track-01.mp3\". While this list is empty the site falls back to the YouTube embed, whose audio a page cannot analyse."
+}

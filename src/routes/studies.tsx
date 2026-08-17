@@ -404,22 +404,6 @@ function StudiesPage() {
       </section>
 
       <section className="study-section">
-        <h2 className="study-h2">Reference sessions</h2>
-        <p className="section-note" style={{ maxWidth: "70ch" }}>
-          {studies.reference.note}
-        </p>
-        <div className="channel-frame" style={{ marginTop: "1.2rem" }}>
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/videoseries?list=UU${studies.reference.channelId.slice(2)}&rel=0&modestbranding=1`}
-            title={`Study sessions from ${studies.reference.handle}`}
-            loading="lazy"
-            allow="encrypted-media; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-      </section>
-
-      <section className="study-section">
         <h2 className="study-h2">Want to try?</h2>
         <p className="section-note" style={{ maxWidth: "70ch" }}>
           The same patterns, as runnable problems. Write a solution, run it against the cases and

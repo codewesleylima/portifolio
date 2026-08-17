@@ -2554,3 +2554,29 @@ select:focus-visible {
 .quiz-feedback .btn {
   margin-top: 1.1rem;
 }
+
+/* ---------- media page ---------- */
+.featured-video.is-compact .channel-frame {
+  max-width: 560px;
+}
+.ig-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+.ig-empty {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  margin-top: 1.2rem;
+  padding: 1.2rem;
+  border: 1px dashed color-mix(in srgb, var(--phosphor-deep) 60%, var(--line));
+  border-radius: 14px;
+}
+.sound-bars > span {
+  transition: height 0.08s linear;
+}
+.sound-bars.is-measured.is-playing > span {
+  animation: none;
+}

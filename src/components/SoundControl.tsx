@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Shuffle, Volume2, VolumeX } from "lucide-react";
+import SoundBars from "@/components/SoundBars";
 
 interface Props {
   isMuted: boolean;
+  /** When present the level meter reads this element instead of animating blind. */
+  audio?: HTMLAudioElement | null;
   volume: number;
   onToggleMute: () => void;
   onVolume: (value: number) => void;
@@ -12,15 +15,13 @@ interface Props {
 /**
  * Audio controls: shuffle, mute, and a volume slider that appears on hover or focus.
  *
- * The bars beside the icon are deliberately NOT a spectrum analyser. Reading real
- * frequency data needs an AnalyserNode over the audio stream, and the soundtrack plays
- * inside a cross-origin YouTube iframe, which the parent page cannot inspect — that is
- * browser origin isolation, not a gap in this component. So these animate to a fixed
- * pattern while sound is on and rest when it is off: an honest "audio is playing"
- * indicator rather than a fake readout of something never measured.
+ * The bars read real audio when the soundtrack is self-hosted, and fall back to a
+ * fixed animation when it is a cross-origin embed whose stream the page cannot touch.
+ * See SoundBars for the distinction.
  */
 export default function SoundControl({
   isMuted,
+  audio,
   volume,
   onToggleMute,
   onVolume,
@@ -67,13 +68,7 @@ export default function SoundControl({
         <Shuffle size={16} />
       </button>
 
-      <span className={`sound-bars${isMuted ? "" : " is-playing"}`} aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <span />
-      </span>
+      <SoundBars audio={audio} active={!isMuted} />
 
       <button
         type="button"
