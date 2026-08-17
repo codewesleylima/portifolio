@@ -2314,3 +2314,243 @@ select:focus-visible {
   color: #ffffff;
   overflow-wrap: anywhere;
 }
+
+/* ---------- sound control ---------- */
+.sound-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Not a spectrum analyser: the soundtrack plays in a cross-origin iframe the page
+   cannot inspect, so these animate to a fixed pattern while sound is on. An honest
+   "playing" indicator rather than a fabricated readout. */
+.sound-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+  opacity: 0.35;
+}
+.sound-bars > span {
+  width: 2px;
+  height: 3px;
+  background: var(--phosphor);
+  border-radius: 1px;
+}
+.sound-bars.is-playing {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sound-bars.is-playing > span {
+    animation: sound-bar 0.9s ease-in-out infinite;
+  }
+  .sound-bars.is-playing > span:nth-child(1) {
+    animation-delay: 0s;
+  }
+  .sound-bars.is-playing > span:nth-child(2) {
+    animation-delay: 0.18s;
+  }
+  .sound-bars.is-playing > span:nth-child(3) {
+    animation-delay: 0.36s;
+  }
+  .sound-bars.is-playing > span:nth-child(4) {
+    animation-delay: 0.12s;
+  }
+  .sound-bars.is-playing > span:nth-child(5) {
+    animation-delay: 0.3s;
+  }
+}
+@keyframes sound-bar {
+  0%,
+  100% {
+    height: 3px;
+  }
+  50% {
+    height: 15px;
+  }
+}
+
+.volume-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--phosphor-deep) 55%, var(--line));
+  border-radius: 10px;
+}
+.volume-slider {
+  width: 110px;
+  accent-color: var(--phosphor);
+}
+.volume-value {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--dim);
+  min-width: 2ch;
+  text-align: right;
+}
+
+/* ---------- quiz ---------- */
+.quiz {
+  margin-top: 1.2rem;
+}
+.quiz-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+}
+.quiz-counter {
+  color: var(--dim);
+  letter-spacing: 0.14em;
+}
+.quiz-score {
+  display: flex;
+  gap: 0.8rem;
+  margin-left: auto;
+}
+.quiz-right {
+  color: var(--healthy);
+}
+.quiz-wrong {
+  color: var(--alert);
+}
+.quiz-accuracy {
+  color: var(--phosphor);
+}
+.quiz-reset {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dim);
+  font: inherit;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.quiz-card {
+  margin-top: 1rem;
+  padding: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--phosphor-deep) 60%, var(--line));
+  border-radius: 14px;
+  background: var(--surface);
+}
+.quiz-topic {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--phosphor);
+}
+.quiz-prompt {
+  margin: 0.6rem 0 0;
+  font-size: clamp(0.92rem, 2.4vw, 1.05rem);
+  line-height: 1.6;
+  color: #ffffff;
+}
+.quiz-options {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.quiz-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #d7e4e2;
+  background: var(--void);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.quiz-option:hover:not(:disabled) {
+  border-color: var(--phosphor);
+}
+.quiz-option:disabled {
+  cursor: default;
+}
+.quiz-option.is-correct {
+  border-color: var(--healthy);
+  color: #ffffff;
+}
+.quiz-option.is-picked-wrong {
+  border-color: var(--alert);
+  color: #ffffff;
+}
+.quiz-option.is-dimmed {
+  opacity: 0.45;
+}
+.quiz-marker {
+  flex: none;
+  width: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--phosphor);
+}
+.quiz-feedback {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+.quiz-verdict {
+  margin: 0 0 0.7rem;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.quiz-why {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.quiz-why li {
+  display: flex;
+  gap: 0.7rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #b9c8c9;
+}
+.quiz-why li.is-correct {
+  color: #ffffff;
+}
+.quiz-refs {
+  margin-top: 1rem;
+}
+.quiz-refs ul {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+.quiz-refs a {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--phosphor);
+}
+.quiz-feedback .btn {
+  margin-top: 1.1rem;
+}

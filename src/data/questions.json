@@ -1,0 +1,523 @@
+{
+  "leetcode": [
+    {
+      "id": "lc-1",
+      "topic": "Binary search",
+      "prompt": "An array is sorted and contains duplicates. A standard binary search returns index 3 for the target. What guarantees that index 3 is the FIRST occurrence?",
+      "options": [
+        {
+          "text": "Nothing — a standard binary search returns an arbitrary matching index",
+          "correct": true,
+          "why": "Correct. On a hit the loop stops, and which of the equal elements it landed on depends on how the midpoints fell. Finding the first occurrence requires recording the hit and continuing to search the left half."
+        },
+        {
+          "text": "The array being sorted guarantees it",
+          "correct": false,
+          "why": "Sortedness only guarantees the duplicates are adjacent. It says nothing about which one the midpoint sequence happened to reach."
+        },
+        {
+          "text": "It is the first if the array length is odd",
+          "correct": false,
+          "why": "Parity of the length has no bearing on where the midpoints land relative to a run of duplicates."
+        },
+        {
+          "text": "Binary search always returns the leftmost match",
+          "correct": false,
+          "why": "That is true only of a variant written to continue leftward after a hit. The textbook version returns as soon as it matches."
+        }
+      ],
+      "references": [
+        {
+          "label": "LeetCode — Binary Search explore card",
+          "url": "https://leetcode.com/explore/learn/card/binary-search/"
+        },
+        {
+          "label": "NeetCode roadmap",
+          "url": "https://neetcode.io/roadmap"
+        }
+      ]
+    },
+    {
+      "id": "lc-2",
+      "topic": "Complexity",
+      "prompt": "What is the time complexity of inserting n elements one by one into a binary heap?",
+      "options": [
+        {
+          "text": "O(n log n)",
+          "correct": true,
+          "why": "Correct. Each insertion sifts up through at most log n levels, and there are n of them. Note this differs from heapify on an existing array, which is O(n)."
+        },
+        {
+          "text": "O(n)",
+          "correct": false,
+          "why": "O(n) is build-heap applied to an array already in memory, using sift-down from the middle. Repeated insertion does not get that bound."
+        },
+        {
+          "text": "O(log n)",
+          "correct": false,
+          "why": "That is the cost of a single insertion, not of n of them."
+        },
+        {
+          "text": "O(n²)",
+          "correct": false,
+          "why": "That would require each insertion to cost O(n). A heap's height is logarithmic, so a sift-up cannot walk more than log n levels."
+        }
+      ],
+      "references": [
+        {
+          "label": "Heap — LeetCode explore",
+          "url": "https://leetcode.com/explore/learn/card/heap/"
+        },
+        {
+          "label": "NeetCode roadmap",
+          "url": "https://neetcode.io/roadmap"
+        }
+      ]
+    },
+    {
+      "id": "lc-3",
+      "topic": "Graphs",
+      "prompt": "Why must every rotten cell be enqueued before the first BFS step in the rotting-oranges problem?",
+      "options": [
+        {
+          "text": "Because all rotten cells spread simultaneously in the same minute",
+          "correct": true,
+          "why": "Correct. The clock advances once per BFS layer, so every source has to be in the initial layer. Starting from one source makes later sources appear to start late and inflates the count."
+        },
+        {
+          "text": "Because BFS cannot be restarted",
+          "correct": false,
+          "why": "BFS can be restarted; the problem is that a restart would count its minutes separately rather than in step with the others."
+        },
+        {
+          "text": "Because the queue must be non-empty to begin",
+          "correct": false,
+          "why": "A single source would also make the queue non-empty. The issue is the timing of the other sources, not emptiness."
+        },
+        {
+          "text": "Because DFS would be needed otherwise",
+          "correct": false,
+          "why": "DFS is the wrong tool here regardless — it explores depth-first and does not track layers, which is exactly what the minute count requires."
+        }
+      ],
+      "references": [
+        {
+          "label": "BFS — LeetCode explore",
+          "url": "https://leetcode.com/explore/learn/card/graph/"
+        },
+        {
+          "label": "NeetCode roadmap",
+          "url": "https://neetcode.io/roadmap"
+        }
+      ]
+    },
+    {
+      "id": "lc-4",
+      "topic": "Sliding window",
+      "prompt": "In the longest-substring-without-repeats problem, why is jumping the left pointer to lastSeen + 1 better than advancing it one step at a time?",
+      "options": [
+        {
+          "text": "It removes an inner loop and keeps the whole solution O(n)",
+          "correct": true,
+          "why": "Correct. Crawling left forward re-examines characters already known to be inside the window, which can degrade to O(n²). The jump makes each pointer traverse the string once."
+        },
+        {
+          "text": "It uses less memory",
+          "correct": false,
+          "why": "Memory is the same either way — a map of last-seen indices, bounded by the alphabet size."
+        },
+        {
+          "text": "It handles Unicode correctly",
+          "correct": false,
+          "why": "Neither approach addresses Unicode; that depends on how the string is indexed, not on the pointer strategy."
+        },
+        {
+          "text": "It is required for correctness",
+          "correct": false,
+          "why": "Crawling is still correct, just slower. The difference is complexity, not correctness."
+        }
+      ],
+      "references": [
+        {
+          "label": "Sliding window",
+          "url": "https://neetcode.io/roadmap"
+        },
+        {
+          "label": "LeetCode explore",
+          "url": "https://leetcode.com/explore/"
+        }
+      ]
+    },
+    {
+      "id": "lc-5",
+      "topic": "Topological sort",
+      "prompt": "Kahn's algorithm finishes having emitted fewer nodes than the graph contains. What does that mean?",
+      "options": [
+        {
+          "text": "The graph contains a cycle",
+          "correct": true,
+          "why": "Correct. Nodes inside a cycle never reach in-degree zero, so they are never enqueued. Comparing the emitted count against the node count is the cycle test."
+        },
+        {
+          "text": "The graph is disconnected",
+          "correct": false,
+          "why": "Disconnected components are fine — Kahn's starts from every in-degree-zero node, so separate components are all emitted."
+        },
+        {
+          "text": "The adjacency list was built backwards",
+          "correct": false,
+          "why": "That would produce a wrong order, not a short one. Reversed edges still eventually drain in an acyclic graph."
+        },
+        {
+          "text": "The queue was a stack instead",
+          "correct": false,
+          "why": "Using a stack changes which valid topological order you get, not how many nodes come out."
+        }
+      ],
+      "references": [
+        {
+          "label": "Course Schedule",
+          "url": "https://leetcode.com/problems/course-schedule/"
+        },
+        {
+          "label": "NeetCode roadmap",
+          "url": "https://neetcode.io/roadmap"
+        }
+      ]
+    }
+  ],
+  "java": [
+    {
+      "id": "jv-1",
+      "topic": "Collections",
+      "prompt": "Which map guarantees iteration in the order keys were first inserted?",
+      "options": [
+        {
+          "text": "LinkedHashMap",
+          "correct": true,
+          "why": "Correct. It maintains a doubly-linked list across entries in insertion order, which is exactly what it adds over HashMap."
+        },
+        {
+          "text": "HashMap",
+          "correct": false,
+          "why": "HashMap makes no ordering guarantee at all. Any order you observe is an artefact of hashing and can change when the map resizes."
+        },
+        {
+          "text": "TreeMap",
+          "correct": false,
+          "why": "TreeMap iterates in key order — natural ordering or a comparator — not insertion order."
+        },
+        {
+          "text": "Hashtable",
+          "correct": false,
+          "why": "Hashtable is the legacy synchronised map and, like HashMap, guarantees no ordering."
+        }
+      ],
+      "references": [
+        {
+          "label": "java.util package summary",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/package-summary.html"
+        }
+      ]
+    },
+    {
+      "id": "jv-2",
+      "topic": "Concurrency",
+      "prompt": "Why is HashMap unsafe under concurrent writes even when no two threads touch the same key?",
+      "options": [
+        {
+          "text": "A concurrent resize can corrupt internal structure regardless of which keys are involved",
+          "correct": true,
+          "why": "Correct. Rehashing rebuilds the table, and two threads resizing at once can leave entries lost or, historically, in a cycle. Key disjointness does not help because the table itself is shared."
+        },
+        {
+          "text": "It is safe as long as the keys differ",
+          "correct": false,
+          "why": "That reasoning ignores the shared table. Resizing touches every bucket, not just the one for your key."
+        },
+        {
+          "text": "Only reads are unsafe",
+          "correct": false,
+          "why": "Reads alone are safe. It is the concurrent structural modification that breaks the invariants."
+        },
+        {
+          "text": "It throws ConcurrentModificationException in that case",
+          "correct": false,
+          "why": "That exception is for iteration during modification. Concurrent writes fail silently instead, which is worse."
+        }
+      ],
+      "references": [
+        {
+          "label": "java.util package summary",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/package-summary.html"
+        }
+      ]
+    },
+    {
+      "id": "jv-3",
+      "topic": "Streams",
+      "prompt": "What does a Java stream do when a terminal operation is never called?",
+      "options": [
+        {
+          "text": "Nothing — intermediate operations are lazy and never run",
+          "correct": true,
+          "why": "Correct. Intermediate operations only build a pipeline. Without a terminal operation nothing is consumed and no element is processed."
+        },
+        {
+          "text": "It processes all elements eagerly",
+          "correct": false,
+          "why": "That is the behaviour of a plain loop, not of a stream. Streams defer everything to the terminal stage."
+        },
+        {
+          "text": "It throws IllegalStateException",
+          "correct": false,
+          "why": "That is thrown when a stream is reused after being consumed, not when it is never consumed."
+        },
+        {
+          "text": "It processes the first element only",
+          "correct": false,
+          "why": "No element is processed. Short-circuiting is a property of some terminal operations, which is a different thing."
+        }
+      ],
+      "references": [
+        {
+          "label": "java.util package summary",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/package-summary.html"
+        }
+      ]
+    },
+    {
+      "id": "jv-4",
+      "topic": "equals & hashCode",
+      "prompt": "An object is used as a HashMap key. Its hashCode is overridden but equals is not. What happens?",
+      "options": [
+        {
+          "text": "Lookups fail even for an equal object, because equality falls back to reference identity",
+          "correct": true,
+          "why": "Correct. The bucket is found by hash, but the entry is confirmed by equals. Default equals compares references, so a distinct-but-equal instance never matches."
+        },
+        {
+          "text": "It works, because hashCode alone identifies the entry",
+          "correct": false,
+          "why": "Hash collisions are expected, so the map must confirm with equals. Hash alone cannot identify an entry."
+        },
+        {
+          "text": "It throws at insertion time",
+          "correct": false,
+          "why": "Nothing throws. The map behaves consistently by its own contract; it is your contract that is broken."
+        },
+        {
+          "text": "The map silently uses toString instead",
+          "correct": false,
+          "why": "toString has no role in map lookup."
+        }
+      ],
+      "references": [
+        {
+          "label": "java.util package summary",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/package-summary.html"
+        }
+      ]
+    },
+    {
+      "id": "jv-5",
+      "topic": "Memory",
+      "prompt": "What distinguishes a checked exception from an unchecked one in Java?",
+      "options": [
+        {
+          "text": "Checked exceptions must be declared or handled at compile time",
+          "correct": true,
+          "why": "Correct. Anything extending Exception but not RuntimeException must be caught or declared, and the compiler enforces it."
+        },
+        {
+          "text": "Checked exceptions are slower to throw",
+          "correct": false,
+          "why": "Throwing cost is the same. The difference is entirely a compile-time contract."
+        },
+        {
+          "text": "Unchecked exceptions cannot be caught",
+          "correct": false,
+          "why": "They can be caught normally; they simply are not required to be."
+        },
+        {
+          "text": "Checked exceptions cannot cross thread boundaries",
+          "correct": false,
+          "why": "Neither kind crosses threads implicitly — an exception is confined to the thread that threw it, whatever its category."
+        }
+      ],
+      "references": [
+        {
+          "label": "java.util package summary",
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/package-summary.html"
+        }
+      ]
+    }
+  ],
+  "aws": [
+    {
+      "id": "aw-1",
+      "topic": "S3",
+      "prompt": "Which S3 storage class is designed for data accessed roughly once a quarter with millisecond retrieval?",
+      "options": [
+        {
+          "text": "S3 Standard-IA",
+          "correct": true,
+          "why": "Correct. Infrequent Access keeps millisecond retrieval while lowering storage cost, in exchange for a retrieval fee and a 30-day minimum duration."
+        },
+        {
+          "text": "S3 Glacier Deep Archive",
+          "correct": false,
+          "why": "Deep Archive retrieval is measured in hours, which rules out any millisecond requirement."
+        },
+        {
+          "text": "S3 Standard",
+          "correct": false,
+          "why": "Standard would work but costs more per GB with no retrieval fee — the wrong trade for quarterly access."
+        },
+        {
+          "text": "S3 Express One Zone",
+          "correct": false,
+          "why": "Express One Zone targets single-digit-millisecond, very high request rates, which is the opposite access pattern."
+        }
+      ],
+      "references": [
+        {
+          "label": "S3 storage classes",
+          "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html"
+        }
+      ]
+    },
+    {
+      "id": "aw-2",
+      "topic": "VPC",
+      "prompt": "An EC2 instance in a private subnet needs outbound internet access but must not be reachable from it. What provides this?",
+      "options": [
+        {
+          "text": "A NAT gateway in a public subnet",
+          "correct": true,
+          "why": "Correct. NAT translates outbound traffic and holds no inbound route back to the instance, which is exactly the asymmetry required."
+        },
+        {
+          "text": "An internet gateway attached to the private subnet",
+          "correct": false,
+          "why": "Attaching an internet gateway route makes the subnet public by definition, which is the thing being avoided."
+        },
+        {
+          "text": "A security group rule allowing outbound only",
+          "correct": false,
+          "why": "Security groups filter traffic but do not provide a route. Without a route to the internet there is nothing to filter."
+        },
+        {
+          "text": "A VPC endpoint",
+          "correct": false,
+          "why": "Endpoints reach specific AWS services privately. They do not provide general internet egress."
+        }
+      ],
+      "references": [
+        {
+          "label": "NAT gateways",
+          "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+        }
+      ]
+    },
+    {
+      "id": "aw-3",
+      "topic": "IAM",
+      "prompt": "An explicit Deny in one policy and an Allow in another apply to the same action. What is the result?",
+      "options": [
+        {
+          "text": "Denied — an explicit Deny always wins",
+          "correct": true,
+          "why": "Correct. Evaluation is deny-by-default, an Allow can override the default, and an explicit Deny overrides everything. That ordering is what makes guardrail policies work."
+        },
+        {
+          "text": "Allowed — the more specific policy wins",
+          "correct": false,
+          "why": "Specificity plays no part in IAM evaluation. The three-step order is absolute."
+        },
+        {
+          "text": "Allowed — identity policies beat resource policies",
+          "correct": false,
+          "why": "Neither type outranks the other. An explicit Deny in either is final."
+        },
+        {
+          "text": "It depends on policy attachment order",
+          "correct": false,
+          "why": "Policies are evaluated as a set. Attachment order is not part of the model."
+        }
+      ],
+      "references": [
+        {
+          "label": "Policy evaluation logic",
+          "url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+        }
+      ]
+    },
+    {
+      "id": "aw-4",
+      "topic": "SQS",
+      "prompt": "A standard SQS queue delivers the same message twice. Is this a defect?",
+      "options": [
+        {
+          "text": "No — standard queues guarantee at-least-once delivery, so consumers must be idempotent",
+          "correct": true,
+          "why": "Correct. Duplicates are a documented property of the standard queue. FIFO queues offer exactly-once processing within a deduplication window when that guarantee is required."
+        },
+        {
+          "text": "Yes — SQS guarantees exactly-once delivery",
+          "correct": false,
+          "why": "Only FIFO queues offer exactly-once processing, and only within a deduplication interval. Standard queues never promise it."
+        },
+        {
+          "text": "Yes, if the visibility timeout is set correctly",
+          "correct": false,
+          "why": "A correct visibility timeout reduces redelivery from slow consumers, but duplicates remain possible by design."
+        },
+        {
+          "text": "No, but only when the queue is encrypted",
+          "correct": false,
+          "why": "Encryption has no bearing on delivery semantics."
+        }
+      ],
+      "references": [
+        {
+          "label": "SQS standard queues",
+          "url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html"
+        }
+      ]
+    },
+    {
+      "id": "aw-5",
+      "topic": "Lambda",
+      "prompt": "What most directly reduces cold-start latency for a Java Lambda function?",
+      "options": [
+        {
+          "text": "Provisioned concurrency",
+          "correct": true,
+          "why": "Correct. It keeps initialised execution environments warm, which removes the JVM start and class-loading cost from the request path."
+        },
+        {
+          "text": "Increasing the timeout",
+          "correct": false,
+          "why": "Timeout caps how long an invocation may run. It has no effect on how long initialisation takes."
+        },
+        {
+          "text": "Adding more environment variables",
+          "correct": false,
+          "why": "Environment variables do not affect initialisation time in any meaningful way."
+        },
+        {
+          "text": "Switching to a larger deployment package",
+          "correct": false,
+          "why": "A larger package makes cold starts worse, not better, since more must be loaded."
+        }
+      ],
+      "references": [
+        {
+          "label": "Lambda provisioned concurrency",
+          "url": "https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html"
+        }
+      ]
+    }
+  ]
+}

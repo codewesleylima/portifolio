@@ -20,6 +20,8 @@ const REAPPLY_DELAYS_MS = [0, 250, 700, 1500];
 
 interface AmbientAudioProps {
   isMuted: boolean;
+  /** 0-100. Applied on change and re-applied after every track swap. */
+  volume?: number;
   /** Bumped by the caller to request a different track. */
   trackNonce?: number;
   onFirstGesture?: () => void;
@@ -31,7 +33,12 @@ interface AmbientAudioProps {
  * on the very first user gesture — click, key, scroll or touch.
  * The caller can also toggle mute state at any time via the isMuted prop.
  */
-export function AmbientAudio({ isMuted, trackNonce = 0, onFirstGesture }: AmbientAudioProps) {
+export function AmbientAudio({
+  isMuted,
+  volume = 35,
+  trackNonce = 0,
+  onFirstGesture,
+}: AmbientAudioProps) {
   // Index rather than a random pick at render time: the first track must match on
   // server and client, or hydration mismatches. Shuffling is a user action, so it
   // only ever happens after mount.
@@ -45,6 +52,8 @@ export function AmbientAudio({ isMuted, trackNonce = 0, onFirstGesture }: Ambien
   // during the reapply window wins instead of being overwritten by a stale value.
   const mutedRef = useRef(isMuted);
   mutedRef.current = isMuted;
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
 
   const post = useCallback((func: string, args: unknown[] = []) => {
     frameRef.current?.contentWindow?.postMessage(
@@ -59,7 +68,7 @@ export function AmbientAudio({ isMuted, trackNonce = 0, onFirstGesture }: Ambien
       return;
     }
     post("unMute");
-    post("setVolume", [35]);
+    post("setVolume", [volumeRef.current]);
     post("playVideo");
   }, [post]);
 
@@ -98,7 +107,7 @@ export function AmbientAudio({ isMuted, trackNonce = 0, onFirstGesture }: Ambien
   /* External mute toggle, and every track change. */
   useEffect(() => {
     applyWithRetries();
-  }, [isMuted, index, applyWithRetries]);
+  }, [isMuted, volume, index, applyWithRetries]);
 
   /* Initial wake on first user gesture. */
   useEffect(() => {

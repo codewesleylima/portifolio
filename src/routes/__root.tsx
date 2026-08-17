@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Shuffle, Volume2, VolumeX } from "lucide-react";
+import SoundControl from "@/components/SoundControl";
 import NavMenu from "@/components/NavMenu";
 import LanguageMenu from "@/components/LanguageMenu";
 import { LocaleProvider, useLocale } from "@/lib/i18n";
@@ -129,11 +129,15 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function SiteNav({
   isMuted,
+  volume,
   onToggleMute,
+  onVolume,
   onShuffle,
 }: {
   isMuted: boolean;
+  volume: number;
   onToggleMute: () => void;
+  onVolume: (value: number) => void;
   onShuffle: () => void;
 }) {
   const { t } = useLocale();
@@ -154,26 +158,13 @@ function SiteNav({
         <div className="site-nav-links">
           <Link to="/">{t("nav.console")}</Link>
           <Link to="/resume">{t("nav.resume")}</Link>
-          <button
-            type="button"
-            className="sound-toggle"
-            onClick={onShuffle}
-            aria-label="Shuffle soundtrack"
-            title="Shuffle soundtrack"
-          >
-            <Shuffle size={16} />
-          </button>
-          <button
-            type="button"
-            className="sound-toggle"
-            onClick={onToggleMute}
-            aria-label={isMuted ? "Unmute soundtrack" : "Mute soundtrack"}
-            title={isMuted ? "Unmute soundtrack" : "Mute soundtrack"}
-            aria-pressed={!isMuted}
-          >
-            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-            <span className="sound-toggle-pip" aria-hidden="true" />
-          </button>
+          <SoundControl
+            isMuted={isMuted}
+            volume={volume}
+            onToggleMute={onToggleMute}
+            onVolume={onVolume}
+            onShuffle={onShuffle}
+          />
         </div>
       </div>
     </nav>
@@ -184,17 +175,21 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [isMuted, setIsMuted] = useState(true);
   const [trackNonce, setTrackNonce] = useState(0);
+  const [volume, setVolume] = useState(35);
 
   return (
     <QueryClientProvider client={queryClient}>
       <LocaleProvider>
         <SiteNav
           isMuted={isMuted}
+          volume={volume}
+          onVolume={setVolume}
           onToggleMute={() => setIsMuted((m) => !m)}
           onShuffle={() => setTrackNonce((n) => n + 1)}
         />
         <AmbientAudio
           isMuted={isMuted}
+          volume={volume}
           trackNonce={trackNonce}
           onFirstGesture={() => setIsMuted(false)}
         />

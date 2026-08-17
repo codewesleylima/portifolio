@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import Challenge, { type ChallengeSpec } from "@/components/Challenge";
+import Quiz, { type QuizQuestion } from "@/components/Quiz";
+import questions from "@/data/questions.json";
 import studies from "@/data/studies.json";
 
 export const Route = createFileRoute("/studies")({
@@ -186,8 +188,41 @@ function ProgressChart() {
   );
 }
 
+/**
+ * Ordered by recency of study, not by seniority of the subject: LeetCode is the live
+ * track, Java the standing one, AWS the certification track behind it.
+ */
+const TRACKS = [
+  {
+    id: "leetcode",
+    label: "LeetCode",
+    blurb:
+      "The active track. Algorithms and data structures worked through under protocol, with solutions drafted in plain text and reasoning narrated out loud.",
+    /** Only this track has a verified reference channel; the others are left without
+        rather than pointed at something unvetted. */
+    reference: studies.reference.channelId,
+  },
+  {
+    id: "java",
+    label: "Java",
+    blurb:
+      "The standing track. Language and library behaviour recalled from memory rather than from a dropdown — collections and their guarantees, concurrency, the contracts the compiler does not enforce.",
+    reference: null,
+  },
+  {
+    id: "aws",
+    label: "AWS",
+    blurb:
+      "The certification track. Service selection under real constraints: which storage class, which network path, which delivery guarantee, and what each one costs.",
+    reference: null,
+  },
+] as const;
+
 function StudiesPage() {
   const [active, setActive] = useState((studies.challenges as ChallengeSpec[])[0]?.id ?? "");
+  const [track, setTrack] = useState<(typeof TRACKS)[number]["id"]>("leetcode");
+  const current = TRACKS.find((t) => t.id === track) ?? TRACKS[0];
+  const bank = (questions as Record<string, QuizQuestion[]>)[track] ?? [];
 
   return (
     <main className="shell" style={{ paddingBlock: "clamp(3rem,7vw,5rem)" }}>
@@ -324,6 +359,48 @@ function StudiesPage() {
             <li key={rule}>{rule}</li>
           ))}
         </ol>
+      </section>
+
+      <section className="study-section">
+        <h2 className="study-h2">Questions</h2>
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          One question at a time, scored as you go. Every option is explained after you answer —
+          knowing why the other three fail is what stops the same mistake next time. References
+          appear with the explanation rather than before it.
+        </p>
+
+        <div className="challenge-tabs" role="tablist">
+          {TRACKS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={track === t.id}
+              className={`chip${track === t.id ? " is-active" : ""}`}
+              onClick={() => setTrack(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="section-note" style={{ maxWidth: "70ch", marginTop: "0.9rem" }}>
+          {current.blurb}
+        </p>
+
+        <Quiz questions={bank} topicLabel={current.label} />
+
+        {current.reference && (
+          <div className="channel-frame" style={{ marginTop: "1.6rem" }}>
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/videoseries?list=UU${current.reference.slice(2)}&rel=0&modestbranding=1`}
+              title={`Study sessions for ${current.label}`}
+              loading="lazy"
+              allow="encrypted-media; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )}
       </section>
 
       <section className="study-section">
