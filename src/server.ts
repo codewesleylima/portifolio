@@ -17,30 +17,42 @@ import { fetchLivePortfolio, LIVE_TTL_SECONDS } from "./lib/github-live";
  */
 const translationMemo = new Map<string, string>();
 
-async function translateOne(text: string, target: string): Promise<string> {
-  const key = `${target}::${text}`;
-  const cached = translationMemo.get(key);
-  if (cached) return cached;
+/**
+ * One upstream call per batch, not per string.
+ *
+ * The first version called the provider once per text node. A page here carries well
+ * over a hundred of them, which meant over a hundred subrequests — past the Worker's
+ * per-request subrequest ceiling, and far past what a keyless provider tolerates
+ * before it starts answering with quota notices instead of translations. That is why
+ * only the dictionary strings ever changed: everything else silently fell back to the
+ * source text.
+ *
+ * The endpoint below accepts repeated q parameters and answers with one entry per
+ * input, so a batch of twenty costs a single subrequest.
+ */
+async function translateBatch(texts: string[], target: string): Promise<string[]> {
+  const params = new URLSearchParams({ client: "gtx", sl: "en", tl: target, dt: "t" });
+  for (const text of texts) params.append("q", text);
 
-  const url =
-    "https://api.mymemory.translated.net/get" +
-    `?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(`en|${target}`)}`;
+  const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params}`, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; portfolio-i18n)" },
+  });
+  if (!response.ok) throw new Error(`translate responded ${response.status}`);
 
-  const response = await fetch(url, { headers: { "User-Agent": "portfolio-translate" } });
-  if (!response.ok) return text;
+  const payload = (await response.json()) as unknown;
 
-  const payload = (await response.json()) as {
-    responseData?: { translatedText?: string };
-    responseStatus?: number;
-  };
-  const translated = payload.responseData?.translatedText;
+  // A single q returns [[[translated, source, ...]], ...]; several return one such
+  // structure per input. Normalising both shapes here keeps the caller simple.
+  const groups: unknown[] =
+    texts.length === 1 ? [payload] : Array.isArray(payload) ? (payload as unknown[]) : [];
 
-  // The provider returns its own error strings inside a 200, so reject anything that
-  // looks like a quota notice rather than writing it onto the page.
-  if (!translated || /MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(translated)) return text;
-
-  translationMemo.set(key, translated);
-  return translated;
+  return texts.map((source, i) => {
+    const group = groups[i] as unknown[] | undefined;
+    const segments = (group?.[0] ?? []) as unknown[];
+    if (!Array.isArray(segments) || segments.length === 0) return source;
+    const joined = segments.map((seg) => (Array.isArray(seg) ? String(seg[0] ?? "") : "")).join("");
+    return joined.trim() ? joined : source;
+  });
 }
 
 async function handleTranslate(request: Request): Promise<Response> {
@@ -57,11 +69,25 @@ async function handleTranslate(request: Request): Promise<Response> {
       });
     }
 
-    const results = await Promise.all(
-      texts.map(async (text) => [text, await translateOne(text, target)] as const),
-    );
+    const translations: Record<string, string> = {};
+    const missing: string[] = [];
 
-    return new Response(JSON.stringify({ translations: Object.fromEntries(results) }), {
+    for (const text of texts) {
+      const cached = translationMemo.get(`${target}::${text}`);
+      if (cached) translations[text] = cached;
+      else missing.push(text);
+    }
+
+    if (missing.length > 0) {
+      const translated = await translateBatch(missing, target);
+      missing.forEach((source, i) => {
+        const value = translated[i] ?? source;
+        translationMemo.set(`${target}::${source}`, value);
+        translations[source] = value;
+      });
+    }
+
+    return new Response(JSON.stringify({ translations }), {
       headers: {
         "content-type": "application/json; charset=utf-8",
         "cache-control": "public, max-age=86400",

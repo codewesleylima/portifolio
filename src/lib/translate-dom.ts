@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, DICTIONARY_VALUES, type Locale } from "@/lib/i18n";
 
 /**
  * Whole-page translation.
@@ -44,7 +44,10 @@ function collect(root: HTMLElement): Text[] {
       if (!parent) return NodeFilter.FILTER_REJECT;
       if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
       if (parent.closest(SKIP_SELECTOR)) return NodeFilter.FILTER_REJECT;
-      if (!shouldTranslate(node.nodeValue ?? "")) return NodeFilter.FILTER_REJECT;
+      const value = (node.nodeValue ?? "").trim();
+      if (!shouldTranslate(value)) return NodeFilter.FILTER_REJECT;
+      // Owned by the dictionary — already in the target language, not English.
+      if (DICTIONARY_VALUES.has(value)) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });
@@ -101,6 +104,30 @@ async function requestTranslations(
 }
 
 let runToken = 0;
+let activeLocale: Locale = DEFAULT_LOCALE;
+let observer: MutationObserver | null = null;
+let rerunTimer: number | null = null;
+
+/**
+ * React owns these text nodes. Any re-render or remount — a filter chip, the arcade
+ * loop, the live repository fetch resolving, a route change — writes English back over
+ * whatever was translated. A single pass therefore cannot hold.
+ *
+ * The observer re-runs the pass, debounced, whenever new text lands in the document.
+ * It is disconnected during the pass itself so the translation does not observe its
+ * own writes and loop forever.
+ */
+function ensureObserver() {
+  if (observer || typeof MutationObserver === "undefined") return;
+
+  observer = new MutationObserver(() => {
+    if (activeLocale === DEFAULT_LOCALE) return;
+    if (rerunTimer !== null) window.clearTimeout(rerunTimer);
+    rerunTimer = window.setTimeout(() => void translatePage(activeLocale), 120);
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
 
 /**
  * Applies `locale` to every eligible text node under `root`.
@@ -111,6 +138,14 @@ let runToken = 0;
  */
 export async function translatePage(locale: Locale, root: HTMLElement = document.body) {
   const token = ++runToken;
+  activeLocale = locale;
+  ensureObserver();
+
+  // Muted while we write, or every swap below would queue another pass.
+  observer?.disconnect();
+  const reconnect = () =>
+    observer?.observe(document.body, { childList: true, subtree: true, characterData: true });
+
   const nodes = collect(root);
 
   for (const node of nodes) {
@@ -122,6 +157,7 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
       const original = originals.get(node);
       if (original !== undefined) node.nodeValue = original;
     }
+    reconnect();
     return;
   }
 
@@ -138,13 +174,16 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
     }
   }
 
-  if (pending.size === 0) return;
+  if (pending.size === 0) {
+    reconnect();
+    return;
+  }
 
   try {
     const list = [...pending];
     // Chunked so one oversized request cannot fail the whole page, and so partial
     // results land progressively instead of all-or-nothing.
-    const CHUNK = 24;
+    const CHUNK = 20;
     for (let i = 0; i < list.length; i += CHUNK) {
       if (token !== runToken) return; // a newer locale switch superseded this run
       const slice = list.slice(i, i + CHUNK);
@@ -166,5 +205,7 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
     }
   } catch (error) {
     console.error("translation unavailable:", error);
+  } finally {
+    reconnect();
   }
 }

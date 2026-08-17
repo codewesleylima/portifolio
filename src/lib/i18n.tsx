@@ -327,3 +327,16 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 }
 
 export const useLocale = () => useContext(LocaleContext);
+
+/**
+ * Every string the dictionary can render, in any locale.
+ *
+ * The DOM pass assumes the text it finds is English, because that is the source
+ * language it asks the provider to translate from. Dictionary strings are already in
+ * the target language after a switch — sending "Início" to be translated from English
+ * to Portuguese produces nonsense. Skipping anything the dictionary owns keeps the two
+ * layers from fighting over the same nodes.
+ */
+export const DICTIONARY_VALUES: ReadonlySet<string> = new Set(
+  Object.values(STRINGS).flatMap((dict) => Object.values(dict).map((v) => v.trim())),
+);
