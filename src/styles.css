@@ -2280,3 +2280,37 @@ select:focus-visible {
     font-size: 0.72rem;
   }
 }
+
+/* ---------- featured video ---------- */
+.featured-video {
+  margin-top: 1.8rem;
+}
+.featured-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.featured-label {
+  color: var(--phosphor);
+}
+.featured-views {
+  margin-left: auto;
+  color: var(--dim);
+}
+.featured-video .channel-frame {
+  margin-top: 0;
+  border-color: color-mix(in srgb, var(--phosphor) 55%, transparent);
+  box-shadow: 0 0 30px -12px color-mix(in srgb, var(--phosphor) 55%, transparent);
+}
+.featured-title {
+  margin: 0.7rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: #ffffff;
+  overflow-wrap: anywhere;
+}

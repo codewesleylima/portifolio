@@ -55,6 +55,66 @@ async function translateBatch(texts: string[], target: string): Promise<string[]
   });
 }
 
+/**
+ * Most-viewed video for the channel page.
+ *
+ * The Data API would need a key; the public RSS feed does not, and each entry carries
+ * <media:statistics views="..."> alongside the video id. It only covers the 15 most
+ * recent uploads, which is the honest limit of this approach and is stated on the page.
+ */
+async function handleFeaturedVideo(request: Request, ctx: unknown): Promise<Response> {
+  const channelId = new URL(request.url).searchParams.get("channel") ?? "";
+  if (!/^UC[\w-]{20,}$/.test(channelId)) {
+    return new Response(JSON.stringify({ error: "bad channel id" }), {
+      status: 400,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+
+  try {
+    const feed = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
+      headers: { "User-Agent": "portfolio-featured-video" },
+    });
+    if (!feed.ok) throw new Error(`feed responded ${feed.status}`);
+
+    const xml = await feed.text();
+    const entries = xml.split("<entry>").slice(1);
+
+    const videos = entries
+      .map((entry) => ({
+        id: /<yt:videoId>([^<]+)<\/yt:videoId>/.exec(entry)?.[1] ?? "",
+        title: /<media:title>([^<]*)<\/media:title>/.exec(entry)?.[1] ?? "",
+        published: /<published>([^<]+)<\/published>/.exec(entry)?.[1] ?? "",
+        views: Number(/<media:statistics[^>]*views="(\d+)"/.exec(entry)?.[1] ?? 0),
+      }))
+      .filter((v) => v.id);
+
+    if (videos.length === 0) throw new Error("no entries");
+
+    // Sort by views; fall back to newest when the feed omits statistics, which it
+    // does for very recent uploads.
+    const featured = [...videos].sort(
+      (a, b) => b.views - a.views || b.published.localeCompare(a.published),
+    )[0];
+
+    const waitUntil = (ctx as { waitUntil?: (p: Promise<unknown>) => void } | undefined)?.waitUntil;
+    void waitUntil;
+
+    return new Response(JSON.stringify({ featured, count: videos.length }), {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=3600",
+      },
+    });
+  } catch (error) {
+    console.error("featured video failed:", error);
+    return new Response(JSON.stringify({ error: String(error) }), {
+      status: 503,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+}
+
 async function handleTranslate(request: Request): Promise<Response> {
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
@@ -198,6 +258,7 @@ export default {
     const path = new URL(request.url).pathname;
     if (path === "/api/repos") return handleLiveRepos(request, env, ctx);
     if (path === "/api/translate") return handleTranslate(request);
+    if (path === "/api/featured-video") return handleFeaturedVideo(request, ctx);
 
     try {
       const handler = await getServerEntry();

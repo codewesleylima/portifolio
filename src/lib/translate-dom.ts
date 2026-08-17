@@ -147,6 +147,45 @@ function collect(root: HTMLElement): Text[] {
   return nodes;
 }
 
+/**
+ * Attributes carrying visible prose. Text nodes alone were never going to be enough:
+ * the search placeholder, tooltips and image descriptions are all read by users and
+ * none of them is a text node.
+ */
+const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
+
+interface AttrTarget {
+  el: Element;
+  attr: string;
+}
+
+function collectAttrs(root: HTMLElement): AttrTarget[] {
+  const targets: AttrTarget[] = [];
+  const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+  for (const el of Array.from(root.querySelectorAll(selector))) {
+    if (el.closest(SKIP_SELECTOR)) continue;
+    for (const attr of TRANSLATABLE_ATTRS) {
+      const value = el.getAttribute(attr);
+      if (value && shouldTranslate(value) && !DICTIONARY_VALUES.has(value.trim())) {
+        targets.push({ el, attr });
+      }
+    }
+  }
+  return targets;
+}
+
+const attrOriginals = new WeakMap<Element, Map<string, string>>();
+
+function rememberAttr({ el, attr }: AttrTarget) {
+  let map = attrOriginals.get(el);
+  if (!map) {
+    map = new Map();
+    attrOriginals.set(el, map);
+  }
+  if (!map.has(attr)) map.set(attr, el.getAttribute(attr) ?? "");
+  return map.get(attr) ?? "";
+}
+
 /** Original text per node, so switching locales re-translates the source, not a translation. */
 const originals = new WeakMap<Text, string>();
 
@@ -233,15 +272,21 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
     observer?.observe(document.body, { childList: true, subtree: true, characterData: true });
 
   const nodes = collect(root);
+  const attrs = collectAttrs(root);
 
   for (const node of nodes) {
     if (!originals.has(node)) originals.set(node, node.nodeValue ?? "");
   }
+  for (const target of attrs) rememberAttr(target);
 
   if (locale === DEFAULT_LOCALE) {
     for (const node of nodes) {
       const original = originals.get(node);
       if (original !== undefined) node.nodeValue = original;
+    }
+    for (const { el, attr } of attrs) {
+      const original = attrOriginals.get(el)?.get(attr);
+      if (original !== undefined) el.setAttribute(attr, original);
     }
     reconnect();
     return;
@@ -250,6 +295,12 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
   readCache(locale);
 
   const pending = new Set<string>();
+  for (const target of attrs) {
+    const source = rememberAttr(target).trim();
+    const hit = memory.get(cacheKey(locale, source));
+    if (hit && !looksLikeGarbage(source, hit)) target.el.setAttribute(target.attr, hit);
+    else pending.add(source);
+  }
   for (const node of nodes) {
     const source = originals.get(node) ?? "";
     const trimmed = source.trim();
@@ -280,15 +331,27 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
      */
     const gathered: Record<string, string> = {};
 
+    let failed = 0;
     for (let i = 0; i < list.length; i += CHUNK) {
       if (token !== runToken) return; // a newer locale switch superseded this run
       const slice = list.slice(i, i + CHUNK);
-      const translations = await requestTranslations(slice, locale);
-
-      for (const [source, translated] of Object.entries(translations)) {
-        if (looksLikeGarbage(source, translated)) continue;
-        gathered[source] = translated;
+      try {
+        const translations = await requestTranslations(slice, locale);
+        for (const [source, translated] of Object.entries(translations)) {
+          if (looksLikeGarbage(source, translated)) continue;
+          gathered[source] = translated;
+        }
+      } catch {
+        // One rate-limited batch used to abort the entire switch, which is why whole
+        // sections stayed English. Failures are counted and retried instead.
+        failed += 1;
       }
+    }
+
+    if (failed > 0 && token === runToken) {
+      // Backs off, then lets the observer path pick up what is still missing. The
+      // successful strings are already cached, so a retry only asks for the gaps.
+      window.setTimeout(() => void translatePage(locale, root), 1200);
     }
 
     if (token !== runToken) return;
@@ -307,6 +370,12 @@ export async function translatePage(locale: Locale, root: HTMLElement = document
       const source = raw.trim();
       const translated = gathered[source] ?? memory.get(cacheKey(locale, source));
       if (translated) node.nodeValue = raw.replace(source, translated);
+    }
+
+    for (const target of collectAttrs(root)) {
+      const source = rememberAttr(target).trim();
+      const translated = gathered[source] ?? memory.get(cacheKey(locale, source));
+      if (translated) target.el.setAttribute(target.attr, translated);
     }
   } catch (error) {
     console.error("translation unavailable:", error);
