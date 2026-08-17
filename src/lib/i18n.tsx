@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useRouterState } from "@tanstack/react-router";
+import { translatePage } from "@/lib/translate-dom";
 
 /**
  * Static dictionary rather than a live translation API.
@@ -278,6 +280,11 @@ const LocaleContext = createContext<LocaleValue>({
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
+  // Route changes replace the page content with untranslated English, so the pass
+  // has to re-run on navigation, not only when the locale itself changes.
+  // Read from the router rather than from window.location, which does not update
+  // on client-side navigation.
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   // Always starts at the default: reading storage during render would produce
   // different markup on server and client and break hydration.
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
@@ -293,7 +300,13 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale;
-  }, [locale]);
+
+    // Runs after paint so the dictionary strings are already in the DOM and get
+    // skipped as cache hits rather than re-translated. Re-runs on navigation because
+    // a new route renders fresh English text under the same locale.
+    const id = window.setTimeout(() => void translatePage(locale), 60);
+    return () => window.clearTimeout(id);
+  }, [locale, pathname]);
 
   const setLocale = (next: Locale) => {
     setLocaleState(next);

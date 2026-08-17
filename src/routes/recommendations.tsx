@@ -91,7 +91,7 @@ function RecommendationsPage() {
               </div>
             </div>
 
-            <blockquote className="rec-body">
+            <blockquote className="rec-body" data-no-translate>
               {rec.body.map((paragraph, i) => (
                 <p key={i}>{paragraph}</p>
               ))}

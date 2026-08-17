@@ -1,4 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import Challenge, { type ChallengeSpec } from "@/components/Challenge";
+import studies from "@/data/studies.json";
 
 export const Route = createFileRoute("/studies")({
   component: StudiesPage,
@@ -147,7 +150,45 @@ function CurriculumMap() {
   );
 }
 
+function ProgressChart() {
+  const weeks = studies.progress.weeks;
+  const max = Math.max(...weeks.map((w) => w.solved)) * 1.15;
+  const W = 720;
+  const H = 200;
+  const pad = 28;
+  const x = (i: number) => pad + (i * (W - pad * 2)) / (weeks.length - 1);
+  const y = (v: number) => H - pad - (v / max) * (H - pad * 2);
+
+  const areaPath =
+    `M ${x(0)} ${H - pad} ` +
+    weeks.map((w, i) => `L ${x(i)} ${y(w.solved)}`).join(" ") +
+    ` L ${x(weeks.length - 1)} ${H - pad} Z`;
+  const linePath = weeks.map((w, i) => `${i ? "L" : "M"} ${x(i)} ${y(w.unaided)}`).join(" ");
+
+  return (
+    <svg
+      className="progress-chart"
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-label="Problems solved per week, with the unaided subset as a line"
+    >
+      <path d={areaPath} fill="var(--phosphor-deep)" opacity="0.45" />
+      <path d={linePath} fill="none" stroke="var(--phosphor)" strokeWidth="2.5" />
+      {weeks.map((w, i) => (
+        <g key={w.label}>
+          <circle cx={x(i)} cy={y(w.unaided)} r="3.5" fill="var(--phosphor)" />
+          <text x={x(i)} y={H - 8} textAnchor="middle" className="chart-label">
+            {w.label}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function StudiesPage() {
+  const [active, setActive] = useState((studies.challenges as ChallengeSpec[])[0]?.id ?? "");
+
   return (
     <main className="shell" style={{ paddingBlock: "clamp(3rem,7vw,5rem)" }}>
       <p className="eyebrow">04 // study protocol</p>
@@ -160,6 +201,77 @@ function StudiesPage() {
       </p>
 
       <CurriculumMap />
+
+      <section className="study-section">
+        <h2 className="study-h2">Right now</h2>
+        <article className="tile current-card">
+          <div className="current-head">
+            <span className="block-id">{studies.current.block}</span>
+            <div>
+              <p className="current-topic">{studies.current.topic}</p>
+              <p className="current-sub">{studies.current.subtopic}</p>
+            </div>
+            <span className="current-since">since {studies.current.since}</span>
+          </div>
+          <p className="tile-desc">{studies.current.why}</p>
+          <p className="current-next">
+            <span className="eyebrow">up next</span> {studies.current.next}
+          </p>
+        </article>
+      </section>
+
+      <section className="study-section">
+        <h2 className="study-h2">Progress</h2>
+        <div className="metric-row">
+          <div className="metric">
+            <span className="metric-value">{studies.progress.solved}</span>
+            <span className="metric-label">problems solved</span>
+          </div>
+          <div className="metric">
+            <span className="metric-value">
+              {studies.progress.topicsDone}/{studies.progress.topicsTotal}
+            </span>
+            <span className="metric-label">topics closed</span>
+          </div>
+          <div className="metric">
+            <span className="metric-value">{studies.progress.unaidedRate}%</span>
+            <span className="metric-label">solved unaided</span>
+          </div>
+          <div className="metric">
+            <span className="metric-value">{studies.progress.avgMinutes}m</span>
+            <span className="metric-label">median time</span>
+          </div>
+          <div className="metric">
+            <span className="metric-value">{studies.progress.reviewsDue}</span>
+            <span className="metric-label">reviews due</span>
+          </div>
+        </div>
+        <ProgressChart />
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          Two series, because volume alone flatters. The filled area is problems solved; the line is
+          those solved with no reference consulted. The gap between them closing is the actual
+          signal — solving more while still looking things up is motion, not progress.
+        </p>
+      </section>
+
+      <section className="study-section">
+        <h2 className="study-h2">Worked examples</h2>
+        <div className="exercise-list">
+          {studies.exercises.map((ex) => (
+            <article key={ex.name} className="tile exercise-card">
+              <div className="exercise-head">
+                <h3 className="block-name">{ex.name}</h3>
+                <span className="block-weight">{ex.block}</span>
+              </div>
+              <div className="exercise-tags">
+                <span className="badge">{ex.pattern}</span>
+                <span className="label-chip">{ex.complexity}</span>
+              </div>
+              <p className="tile-desc">{ex.note}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="study-section">
         <h2 className="study-h2">Theoretical basis</h2>
@@ -212,6 +324,52 @@ function StudiesPage() {
             <li key={rule}>{rule}</li>
           ))}
         </ol>
+      </section>
+
+      <section className="study-section">
+        <h2 className="study-h2">Reference sessions</h2>
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          {studies.reference.note}
+        </p>
+        <div className="channel-frame" style={{ marginTop: "1.2rem" }}>
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/videoseries?list=UU${studies.reference.channelId.slice(2)}&rel=0&modestbranding=1`}
+            title={`Study sessions from ${studies.reference.handle}`}
+            loading="lazy"
+            allow="encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </section>
+
+      <section className="study-section">
+        <h2 className="study-h2">Want to try?</h2>
+        <p className="section-note" style={{ maxWidth: "70ch" }}>
+          The same patterns, as runnable problems. Write a solution, run it against the cases and
+          read the log — the log is the point, not the score. These run in JavaScript because that
+          is what a browser executes; the reasoning transfers unchanged.
+        </p>
+
+        <div className="challenge-tabs" role="tablist">
+          {(studies.challenges as ChallengeSpec[]).map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              role="tab"
+              aria-selected={active === c.id}
+              className={`chip${active === c.id ? " is-active" : ""}`}
+              onClick={() => setActive(c.id)}
+            >
+              {c.title}
+            </button>
+          ))}
+        </div>
+
+        {(studies.challenges as ChallengeSpec[])
+          .filter((c) => c.id === active)
+          .map((c) => (
+            <Challenge key={c.id} spec={c} />
+          ))}
       </section>
 
       <div style={{ display: "flex", justifyContent: "center", marginTop: "2.5rem" }}>

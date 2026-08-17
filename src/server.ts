@@ -4,6 +4,78 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { fetchLivePortfolio, LIVE_TTL_SECONDS } from "./lib/github-live";
 
+/**
+ * Translation proxy.
+ *
+ * Kept on the Worker rather than called from the browser for two reasons: the upstream
+ * has a per-IP quota that a single origin can pool and cache against, and a browser
+ * call would be blocked by CORS on most providers.
+ *
+ * MyMemory is used because it needs no key, which keeps this working on a fresh deploy
+ * with nothing to configure. It is rate limited and occasionally slow; every failure
+ * path returns the source string unchanged, so a page never ends up half translated.
+ */
+const translationMemo = new Map<string, string>();
+
+async function translateOne(text: string, target: string): Promise<string> {
+  const key = `${target}::${text}`;
+  const cached = translationMemo.get(key);
+  if (cached) return cached;
+
+  const url =
+    "https://api.mymemory.translated.net/get" +
+    `?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(`en|${target}`)}`;
+
+  const response = await fetch(url, { headers: { "User-Agent": "portfolio-translate" } });
+  if (!response.ok) return text;
+
+  const payload = (await response.json()) as {
+    responseData?: { translatedText?: string };
+    responseStatus?: number;
+  };
+  const translated = payload.responseData?.translatedText;
+
+  // The provider returns its own error strings inside a 200, so reject anything that
+  // looks like a quota notice rather than writing it onto the page.
+  if (!translated || /MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(translated)) return text;
+
+  translationMemo.set(key, translated);
+  return translated;
+}
+
+async function handleTranslate(request: Request): Promise<Response> {
+  if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
+
+  try {
+    const body = (await request.json()) as { target?: string; texts?: string[] };
+    const target = (body.target ?? "").slice(0, 5);
+    const texts = (body.texts ?? []).slice(0, 40);
+
+    if (!/^[a-z]{2}$/.test(target) || texts.length === 0) {
+      return new Response(JSON.stringify({ translations: {} }), {
+        headers: { "content-type": "application/json; charset=utf-8" },
+      });
+    }
+
+    const results = await Promise.all(
+      texts.map(async (text) => [text, await translateOne(text, target)] as const),
+    );
+
+    return new Response(JSON.stringify({ translations: Object.fromEntries(results) }), {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=86400",
+      },
+    });
+  } catch (error) {
+    console.error("translate failed:", error);
+    return new Response(JSON.stringify({ translations: {} }), {
+      status: 200,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+}
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -97,9 +169,9 @@ async function handleLiveRepos(request: Request, env: unknown, ctx: unknown): Pr
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    if (new URL(request.url).pathname === "/api/repos") {
-      return handleLiveRepos(request, env, ctx);
-    }
+    const path = new URL(request.url).pathname;
+    if (path === "/api/repos") return handleLiveRepos(request, env, ctx);
+    if (path === "/api/translate") return handleTranslate(request);
 
     try {
       const handler = await getServerEntry();
