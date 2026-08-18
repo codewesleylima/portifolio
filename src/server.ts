@@ -30,29 +30,46 @@ const translationMemo = new Map<string, string>();
  * The endpoint below accepts repeated q parameters and answers with one entry per
  * input, so a batch of twenty costs a single subrequest.
  */
-async function translateBatch(texts: string[], target: string): Promise<string[]> {
-  const params = new URLSearchParams({ client: "gtx", sl: "en", tl: target, dt: "t" });
-  for (const text of texts) params.append("q", text);
+const BATCH_SEPARATOR = "\n@@@\n";
 
+async function translateOnce(query: string, target: string): Promise<string> {
+  const params = new URLSearchParams({ client: "gtx", sl: "en", tl: target, dt: "t", q: query });
   const response = await fetch(`https://translate.googleapis.com/translate_a/single?${params}`, {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; portfolio-i18n)" },
   });
   if (!response.ok) throw new Error(`translate responded ${response.status}`);
 
   const payload = (await response.json()) as unknown;
+  const segments = (Array.isArray(payload) ? (payload[0] as unknown[]) : []) ?? [];
+  if (!Array.isArray(segments)) return query;
+  return segments.map((seg) => (Array.isArray(seg) ? String(seg[0] ?? "") : "")).join("");
+}
 
-  // A single q returns [[[translated, source, ...]], ...]; several return one such
-  // structure per input. Normalising both shapes here keeps the caller simple.
-  const groups: unknown[] =
-    texts.length === 1 ? [payload] : Array.isArray(payload) ? (payload as unknown[]) : [];
+async function translateBatch(texts: string[], target: string): Promise<string[]> {
+  if (texts.length === 1) {
+    const single = await translateOnce(texts[0] as string, target);
+    return [single.trim() ? single : (texts[0] as string)];
+  }
 
-  return texts.map((source, i) => {
-    const group = groups[i] as unknown[] | undefined;
-    const segments = (group?.[0] ?? []) as unknown[];
-    if (!Array.isArray(segments) || segments.length === 0) return source;
-    const joined = segments.map((seg) => (Array.isArray(seg) ? String(seg[0] ?? "") : "")).join("");
-    return joined.trim() ? joined : source;
-  });
+  const joined = await translateOnce(texts.join(BATCH_SEPARATOR), target);
+  const parts = joined.split(/\s*@@@\s*/).map((part) => part.trim());
+
+  // The marker survives in practice, but a provider that reflows it would otherwise
+  // shift every string onto the wrong node. One call per text is the safe fallback.
+  if (parts.length === texts.length) {
+    return texts.map((source, i) => (parts[i]?.trim() ? (parts[i] as string) : source));
+  }
+
+  const out: string[] = [];
+  for (const text of texts) {
+    try {
+      const value = await translateOnce(text, target);
+      out.push(value.trim() ? value : text);
+    } catch {
+      out.push(text);
+    }
+  }
+  return out;
 }
 
 /**

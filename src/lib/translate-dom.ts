@@ -1,4 +1,5 @@
-import { DEFAULT_LOCALE, DICTIONARY_VALUES, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/locale-config";
+import { DICTIONARY_VALUES } from "@/lib/i18n";
 
 /**
  * Whole-page translation.
@@ -42,16 +43,6 @@ const NEVER_TRANSLATE = [
   "itaú unibanco",
   "itau unibanco",
   "cazé tv",
-  "project ecommerce",
-  "library management",
-  "people operations",
-  "microservices lab",
-  "platform foundations",
-  "debug run",
-  "console",
-  "boot.log",
-  "about.me",
-  "arcade",
   "github",
   "linkedin",
   "leetcode",
@@ -72,9 +63,6 @@ const NEVER_TRANSLATE = [
   "cloudwatch",
   "finops",
   "fiap",
-  "résumé",
-  "resume",
-  "email",
 ];
 
 const neverSet = new Set(NEVER_TRANSLATE);
@@ -96,31 +84,42 @@ export function looksLikeGarbage(source: string, translated: string) {
   return false;
 }
 
-/** Strings that would only be corrupted by translation. */
+/**
+ * Strings that would only be corrupted by translation.
+ *
+ * Deliberately permissive: everything a reader can read should switch language. Only
+ * brand/person names (the list above), pure punctuation/numbers and bare identifiers
+ * are held back — headings, labels and short phrases all go through.
+ */
 function shouldTranslate(text: string) {
   const trimmed = text.trim();
-  if (trimmed.length < 3) return false;
+  if (!trimmed) return false;
   if (neverSet.has(trimmed.toLowerCase())) return false;
-  // Proper nouns are what providers corrupt: a short capitalised phrase with no
-  // sentence punctuation is far more likely to be a name than a sentence.
-  if (trimmed.length < 26 && /^[A-Z][\w\s&·.-]*$/.test(trimmed) && !/[.!?,;:]/.test(trimmed)) {
-    // Two or three capitalised words with no punctuation: almost always a name
-    // ("Project Ecommerce", "People Operations"). A single capitalised word is far
-    // more often an ordinary heading — "Services", "Progress" — and product names
-    // that happen to be one word are covered by the list above.
-    const words = trimmed.split(/\s+/);
-    if (words.length >= 2 && words.length <= 3 && words.every((w) => /^[A-Z]/.test(w))) {
-      return false;
-    }
-  }
-  return true;
   // No letters at all: numbers, timestamps, separators, arrows.
   if (!/\p{L}/u.test(trimmed)) return false;
-  // Identifiers and paths: repo names, file names, kebab and snake case. Requires a
-  // separator or a digit — without that condition this also swallowed ordinary
-  // single-word headings like "Services" and "Progress".
-  if (!/\s/.test(trimmed) && /[./_\-\d]/.test(trimmed)) return false;
+  // Bare identifiers and paths: repo names, file names, kebab/snake case, URLs.
+  if (!/\s/.test(trimmed) && /^[\w./_-]+$/.test(trimmed) && /[./_-]/.test(trimmed)) return false;
   return true;
+}
+
+/** Splits prose too long for one upstream call into sentence-sized pieces. */
+function splitLong(text: string, limit = 1200): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]*\s*/g) ?? [text];
+  const parts: string[] = [];
+  let current = "";
+  for (const sentence of sentences) {
+    if (current && current.length + sentence.length > limit) {
+      parts.push(current);
+      current = "";
+    }
+    if (sentence.length > limit) {
+      for (let i = 0; i < sentence.length; i += limit) parts.push(sentence.slice(i, i + limit));
+      continue;
+    }
+    current += sentence;
+  }
+  if (current) parts.push(current);
+  return parts;
 }
 
 function collect(root: HTMLElement): Text[] {
@@ -192,9 +191,17 @@ const originals = new WeakMap<Text, string>();
 const memory = new Map<string, string>();
 const cacheKey = (locale: Locale, text: string) => `${locale}::${text}`;
 
+/**
+ * Persisted across visits, not just across routes: the source strings are static site
+ * copy, so a returning visitor's chosen locale applies with no network at all. The key
+ * is versioned; bumping it invalidates every stored translation at once.
+ */
+const CACHE_VERSION = "v1";
+const storeKey = (locale: Locale) => `i18n:${CACHE_VERSION}:${locale}`;
+
 function readCache(locale: Locale) {
   try {
-    const raw = window.sessionStorage.getItem(`i18n:${locale}`);
+    const raw = window.localStorage.getItem(storeKey(locale));
     if (!raw) return;
     for (const [k, v] of Object.entries(JSON.parse(raw) as Record<string, string>)) {
       memory.set(cacheKey(locale, k), v);
@@ -206,11 +213,18 @@ function readCache(locale: Locale) {
 
 function writeCache(locale: Locale, pairs: Record<string, string>) {
   try {
-    const raw = window.sessionStorage.getItem(`i18n:${locale}`);
+    const key = storeKey(locale);
+    const raw = window.localStorage.getItem(key);
     const merged = { ...(raw ? (JSON.parse(raw) as Record<string, string>) : {}), ...pairs };
-    window.sessionStorage.setItem(`i18n:${locale}`, JSON.stringify(merged));
+    window.localStorage.setItem(key, JSON.stringify(merged));
   } catch {
-    /* quota or private mode — the in-memory map still serves this session */
+    // Quota reached: drop this locale's history and keep only the newest pairs rather
+    // than leaving a half-written blob behind.
+    try {
+      window.localStorage.setItem(storeKey(locale), JSON.stringify(pairs));
+    } catch {
+      /* private mode — the in-memory map still serves this session */
+    }
   }
 }
 
@@ -339,13 +353,24 @@ export async function translatePage(
     let batch: string[] = [];
     let weight = 0;
 
-    // A single paragraph past the budget still has to go somewhere. Sending it alone
-    // works up to the provider's own per-string ceiling; beyond that it is dropped
-    // rather than returned mangled, and the English stays.
-    const MAX_SINGLE = 4000;
-    const sendable = [...pending].filter((t) => encodeURIComponent(t).length <= MAX_SINGLE);
+    // A paragraph past the provider's per-string ceiling used to be dropped, leaving
+    // the longest — and most visible — prose in English. It is split on sentence
+    // boundaries instead, translated in pieces and reassembled.
+    const MAX_SINGLE = 2400;
+    const pieces = new Map<string, string[]>();
+    const units: string[] = [];
 
-    for (const text of sendable) {
+    for (const text of pending) {
+      if (encodeURIComponent(text).length <= MAX_SINGLE) {
+        units.push(text);
+        continue;
+      }
+      const parts = splitLong(text);
+      pieces.set(text, parts);
+      for (const part of parts) units.push(part);
+    }
+
+    for (const text of units) {
       const cost = encodeURIComponent(text).length + 4;
       if (batch.length > 0 && (weight + cost > URL_BUDGET || batch.length >= 20)) {
         batches.push(batch);
@@ -368,22 +393,40 @@ export async function translatePage(
     const gathered: Record<string, string> = {};
 
     let failed = 0;
+    let superseded = false;
     for (const slice of batches) {
-      if (token !== runToken) return; // a newer locale switch superseded this run
       try {
         const translations = await requestTranslations(slice, locale);
         for (const [source, translated] of Object.entries(translations)) {
           if (looksLikeGarbage(source, translated)) continue;
           gathered[source] = translated;
+          // Cached the moment it arrives. React re-renders while requests are in
+          // flight, which starts a newer pass and supersedes this one; without this
+          // the work already paid for would be thrown away and the page would keep
+          // asking for the same strings forever, never applying any of them.
+          memory.set(cacheKey(locale, source), translated);
         }
       } catch {
         // One rate-limited batch used to abort the entire switch, which is why whole
         // sections stayed English. Failures are counted and retried instead.
         failed += 1;
       }
+      // A locale switch mid-flight must stop; a re-render must not.
+      if (activeLocale !== locale) return;
+      if (token !== runToken) superseded = true;
     }
 
-    if (failed > 0 && token === runToken && attempt < 3) {
+    // Reassemble split paragraphs from their translated pieces.
+    for (const [source, parts] of pieces) {
+      const translatedParts = parts.map(
+        (part) => gathered[part] ?? memory.get(cacheKey(locale, part)),
+      );
+      if (translatedParts.every((part): part is string => Boolean(part))) {
+        gathered[source] = translatedParts.join(" ");
+      }
+    }
+
+    if ((failed > 0 || superseded) && activeLocale === locale && attempt < 3) {
       // Backs off and retries only the gaps — everything that succeeded is cached, so
       // a retry costs a fraction of the first pass. Capped so a provider that is down
       // does not retry forever.
@@ -391,11 +434,6 @@ export async function translatePage(
       window.setTimeout(() => void translatePage(locale, root, attempt + 1), delay);
     }
 
-    if (token !== runToken) return;
-
-    for (const [source, translated] of Object.entries(gathered)) {
-      memory.set(cacheKey(locale, source), translated);
-    }
     writeCache(locale, gathered);
 
     // Re-collected rather than reusing the earlier list: React may have replaced

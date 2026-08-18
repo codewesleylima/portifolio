@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/locale-config";
 import { translatePage } from "@/lib/translate-dom";
 
 /**
@@ -14,21 +15,7 @@ import { translatePage } from "@/lib/translate-dom";
  * Proper nouns, repository names and code are deliberately never translated.
  */
 
-export const LOCALES = {
-  en: "English",
-  pt: "Português",
-  es: "Español",
-  fr: "Français",
-  de: "Deutsch",
-  it: "Italiano",
-  zh: "中文",
-  ja: "日本語",
-  ko: "한국어",
-  ru: "Русский",
-} as const;
-
-export type Locale = keyof typeof LOCALES;
-export const DEFAULT_LOCALE: Locale = "en";
+export { LOCALES, DEFAULT_LOCALE, type Locale } from "@/lib/locale-config";
 
 type Dict = Record<string, string>;
 
