@@ -26,7 +26,7 @@ export default function AboutMe({ onBooted }: Props) {
         <div className="about-body">
           <figure className="about-photo">
             <img
-              src="/wesley.png"
+              src="/wesley.webp"
               alt="Portrait of Wesley Lima, backend software engineer"
               loading="lazy"
               decoding="async"

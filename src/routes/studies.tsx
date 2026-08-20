@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import Challenge, { type ChallengeSpec } from "@/components/Challenge";
-import Quiz, { type QuizQuestion } from "@/components/Quiz";
+import { Suspense, lazy, useState } from "react";
+import type { ChallengeSpec } from "@/components/Challenge";
+import type { QuizQuestion } from "@/components/Quiz";
+
+// Both are interactive widgets below the reading material (the quiz runs a state
+// machine, the challenge evaluates code), so they ship as separate chunks.
+const Challenge = lazy(() => import("@/components/Challenge"));
+const Quiz = lazy(() => import("@/components/Quiz"));
 import questions from "@/data/questions.json";
 import studies from "@/data/studies.json";
 
@@ -388,7 +393,9 @@ function StudiesPage() {
           {current.blurb}
         </p>
 
-        <Quiz questions={bank} topicLabel={current.label} />
+        <Suspense fallback={null}>
+          <Quiz questions={bank} topicLabel={current.label} />
+        </Suspense>
 
         {current.reference && (
           <div className="channel-frame" style={{ marginTop: "1.6rem" }}>
@@ -429,7 +436,9 @@ function StudiesPage() {
         {(studies.challenges as ChallengeSpec[])
           .filter((c) => c.id === active)
           .map((c) => (
-            <Challenge key={c.id} spec={c} />
+            <Suspense key={c.id} fallback={null}>
+              <Challenge spec={c} />
+            </Suspense>
           ))}
       </section>
 

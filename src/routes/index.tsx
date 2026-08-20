@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import AboutMe from "@/components/AboutMe";
-import Arcade from "@/components/Arcade";
+// The game is a canvas loop well below the fold: it loads as its own chunk so the
+// console above it paints without waiting for code nobody has scrolled to yet.
+const Arcade = lazy(() => import("@/components/Arcade"));
 import Mascot from "@/components/Mascot";
 import DeployLog from "@/components/DeployLog";
 import ServiceConsole from "@/components/ServiceConsole";
@@ -23,9 +25,14 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    // The hero sprite is the largest thing in the first viewport, so it starts
+    // downloading with the HTML instead of after the component tree resolves.
+    links: [{ rel: "preload", as: "image", href: "/mascot.webp", fetchPriority: "high" }],
   }),
   component: Index,
 });
+
+const LIVE_CACHE_KEY = "portfolio:live-repos:v1";
 
 const LINKS = {
   github: "https://github.com/codewesleylima",
@@ -44,18 +51,54 @@ function Index() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/repos")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((live: Portfolio) => {
-        if (cancelled || !live.repos?.length) return;
-        setData(live);
-        setIsLive(true);
-      })
-      .catch(() => {
-        /* keep the baked dataset */
-      });
+
+    // Same-session revisits reuse the live read instead of paying for the round trip
+    // again. The baked SSR dataset still owns the first paint either way.
+    const cached = (() => {
+      try {
+        const raw = sessionStorage.getItem(LIVE_CACHE_KEY);
+        return raw ? (JSON.parse(raw) as Portfolio) : null;
+      } catch {
+        return null;
+      }
+    })();
+    if (cached?.repos?.length) {
+      setData(cached);
+      setIsLive(true);
+      return;
+    }
+
+    const run = () => {
+      fetch("/api/repos")
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+        .then((live: Portfolio) => {
+          if (cancelled || !live.repos?.length) return;
+          setData(live);
+          setIsLive(true);
+          try {
+            sessionStorage.setItem(LIVE_CACHE_KEY, JSON.stringify(live));
+          } catch {
+            /* storage full or blocked: the fetch still did its job */
+          }
+        })
+        .catch(() => {
+          /* keep the baked dataset */
+        });
+    };
+
+    // Deferred to idle so the refresh never competes with hydration; the visible
+    // result is identical because the SSR data is already on screen.
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const idleId = win.requestIdleCallback?.(run, { timeout: 2000 });
+    const timeoutId = idleId === undefined ? window.setTimeout(run, 300) : undefined;
+
     return () => {
       cancelled = true;
+      if (idleId !== undefined) win.cancelIdleCallback?.(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -115,11 +158,21 @@ function Index() {
           <p className="eyebrow">00 // arcade</p>
           <h2 className="section-title">{t("section.arcade")}</h2>
           <p className="section-note">
-            A break from the dashboards: hop over incidents and keep the service up. Space, arrow up
-            or tap to jump.
+            A break from the dashboards: an 8-bit brawl against the incident. Arrows to move and
+            jump, A to punch, S to kick, D to guard — or use the on-screen pad.
           </p>
           <div style={{ marginTop: "1.8rem" }}>
-            <Arcade />
+            <Suspense
+              fallback={
+                <div
+                  className="arcade-stage"
+                  style={{ aspectRatio: "720 / 300", width: "100%" }}
+                  aria-hidden="true"
+                />
+              }
+            >
+              <Arcade />
+            </Suspense>
           </div>
         </div>
       </section>

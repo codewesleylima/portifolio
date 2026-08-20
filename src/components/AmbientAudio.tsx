@@ -43,6 +43,11 @@ export function AmbientAudio({
   // server and client, or hydration mismatches. Shuffling is a user action, so it
   // only ever happens after mount.
   const [index, setIndex] = useState(0);
+  // The player is worth ~1 MB of third-party code and it starts muted anyway, so it
+  // is not mounted during the first paint. It appears at the first user gesture (the
+  // exact moment sound is allowed to start) or, failing that, when the browser goes
+  // idle — so a visitor who never interacts still ends up with a ready player.
+  const [mounted, setMounted] = useState(false);
   const lastNonce = useRef(trackNonce);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const hasWokenRef = useRef(false);
@@ -109,11 +114,29 @@ export function AmbientAudio({
     applyWithRetries();
   }, [isMuted, volume, index, applyWithRetries]);
 
+  /* Mount the player when the browser is idle, so a passive visitor still gets one. */
+  useEffect(() => {
+    if (mounted) return;
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (win.requestIdleCallback) {
+      const id = win.requestIdleCallback(() => setMounted(true), { timeout: 4000 });
+      return () => win.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setMounted(true), 2500);
+    return () => window.clearTimeout(id);
+  }, [mounted]);
+
   /* Initial wake on first user gesture. */
   useEffect(() => {
     const wake = () => {
       if (hasWokenRef.current) return;
       hasWokenRef.current = true;
+      // Mounting here is what makes the deferral invisible: the gesture that is
+      // allowed to unmute is the same gesture that creates the player.
+      setMounted(true);
       applyState();
       onFirstGesture?.();
     };
@@ -128,6 +151,8 @@ export function AmbientAudio({
     events.forEach((e) => window.addEventListener(e, wake, { once: true, passive: true }));
     return () => events.forEach((e) => window.removeEventListener(e, wake));
   }, [applyState, onFirstGesture]);
+
+  if (!mounted) return null;
 
   const src =
     `https://www.youtube-nocookie.com/embed/${TRACKS[index]}` +

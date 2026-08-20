@@ -5,9 +5,12 @@ export default function Mascot() {
       <span className="mascot-phosphor" aria-hidden="true" />
       <img
         className="mascot-sprite"
-        src="/mascot.png"
+        src="/mascot.webp"
         alt="Pixel-art engineer typing at a CRT workstation"
         decoding="async"
+        width={512}
+        height={464}
+        fetchPriority="high"
       />
       <span className="mascot-ghost mascot-ghost-a" aria-hidden="true" />
       <span className="mascot-ghost mascot-ghost-b" aria-hidden="true" />

@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/locale-config";
 import { translatePage } from "@/lib/translate-dom";
 
 /**
@@ -15,7 +14,9 @@ import { translatePage } from "@/lib/translate-dom";
  * Proper nouns, repository names and code are deliberately never translated.
  */
 
-export { LOCALES, DEFAULT_LOCALE, type Locale } from "@/lib/locale-config";
+import { LOCALES, DEFAULT_LOCALE, type Locale } from "@/lib/locale-config";
+
+export { LOCALES, DEFAULT_LOCALE, type Locale };
 
 type Dict = Record<string, string>;
 

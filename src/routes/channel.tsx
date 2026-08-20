@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import InstagramWall from "@/components/InstagramWall";
+import { Suspense, lazy, useEffect, useState } from "react";
+const InstagramWall = lazy(() => import("@/components/InstagramWall"));
 
 export const Route = createFileRoute("/channel")({
   component: ChannelPage,
@@ -97,7 +97,9 @@ function ChannelPage() {
         <p className="section-note" style={{ maxWidth: "70ch" }}>
           Shorter form: fragments of the same work, posted as it happens.
         </p>
-        <InstagramWall />
+        <Suspense fallback={null}>
+          <InstagramWall />
+        </Suspense>
       </section>
 
       <div className="channel-grid">

@@ -30,6 +30,11 @@ const translationMemo = new Map<string, string>();
  * The endpoint below accepts repeated q parameters and answers with one entry per
  * input, so a batch of twenty costs a single subrequest.
  */
+/**
+ * The endpoint ignores every q parameter after the first — which is why only the
+ * dictionary strings ever changed language and all page prose stayed English. The
+ * batch is joined into one query with a marker line instead, then split back apart.
+ */
 const BATCH_SEPARATOR = "\n@@@\n";
 
 async function translateOnce(query: string, target: string): Promise<string> {
