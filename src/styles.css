@@ -3000,3 +3000,145 @@ select:focus-visible {
 .sound-bars.is-measured.is-playing > span {
   animation: none;
 }
+
+/* ---------- connection map ---------- */
+.cmap {
+  margin-top: 1.8rem;
+}
+.cmap-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+.cmap-tab {
+  font-family: var(--mono, inherit);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.75rem;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--dim) 40%, transparent);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.cmap-tab:hover,
+.cmap-tab:focus-visible {
+  color: var(--phosphor);
+  border-color: var(--phosphor);
+}
+.cmap-tab.is-active {
+  color: var(--void);
+  background: var(--phosphor);
+  border-color: var(--phosphor);
+}
+.cmap-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--dim) 30%, transparent);
+  background: var(--surface);
+  padding: 1.2rem;
+}
+.cmap-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.cmap-orbit {
+  stroke: color-mix(in srgb, var(--dim) 45%, transparent);
+}
+.cmap-edge {
+  stroke: color-mix(in srgb, var(--dim) 55%, transparent);
+  stroke-width: 1;
+  transition:
+    stroke 0.15s ease,
+    stroke-width 0.15s ease;
+}
+.cmap-edge.is-lit {
+  stroke: var(--phosphor);
+  stroke-width: 2;
+}
+.cmap-node {
+  cursor: pointer;
+  outline: none;
+}
+.cmap-node.is-lit circle,
+.cmap-node:focus-visible circle {
+  filter: drop-shadow(0 0 6px var(--phosphor));
+}
+.cmap-hub-halo {
+  fill: color-mix(in srgb, var(--phosphor) 12%, transparent);
+  stroke: color-mix(in srgb, var(--phosphor) 55%, transparent);
+  animation: cmap-pulse 2.6s ease-in-out infinite;
+}
+@keyframes cmap-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.cmap-label {
+  fill: var(--dim);
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.cmap-node.is-lit .cmap-label {
+  fill: var(--phosphor);
+}
+.cmap-label.is-hub {
+  fill: var(--phosphor);
+  font-size: 14px;
+}
+.cmap-panel-title {
+  font-size: 1.1rem;
+  margin: 0.35rem 0 0.5rem;
+  color: var(--phosphor);
+  word-break: break-word;
+}
+.cmap-panel-meta {
+  font-size: 0.75rem;
+  color: var(--dim);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.35rem 0;
+}
+.cmap-panel-desc {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0.6rem 0 1rem;
+}
+@media (max-width: 860px) {
+  .cmap-body {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmap-hub-halo {
+    animation: none;
+  }
+}
+
+/* Inside the project modal the map gets the full width and the detail panel
+   stacks under it, so node labels stay legible. */
+.svc-modal .cmap-body {
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+.svc-modal .cmap-svg {
+  max-width: 520px;
+  margin-inline: auto;
+}
+.svc-modal .cmap-tabs {
+  margin-top: 0.9rem;
+}

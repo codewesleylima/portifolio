@@ -8,6 +8,7 @@ import {
   type RepoStatus,
 } from "@/lib/portfolio";
 import { resolveProjects, type Project } from "@/lib/projects";
+import ConnectionMap from "@/components/ConnectionMap";
 
 type SortKey = "pushed" | "stars" | "name";
 type GroupKey = "project" | "topic" | "language" | "repo";
@@ -25,6 +26,7 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
   const [revealed, setRevealed] = useState(false);
   const [active, setActive] = useState<Repo | null>(null);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const [projectTab, setProjectTab] = useState<"overview" | "map">("overview");
   const gridRef = useRef<HTMLDivElement>(null);
 
   const languages = useMemo(
@@ -93,6 +95,8 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
       setRevealed(true);
       return;
     }
+    // Reveal well before the grid enters the viewport: waiting for the tiles to be
+    // 8% visible made the section look broken while scrolling down to it.
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -100,8 +104,6 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
           io.disconnect();
         }
       },
-      // Reveal well before the grid enters the viewport: waiting for the tiles to be
-      // 8% visible made the section look broken while scrolling down to it.
       { threshold: 0, rootMargin: "600px 0px 600px 0px" },
     );
     io.observe(node);
@@ -245,7 +247,10 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
               type="button"
               key={p.id}
               className={`tile project-tile${revealed ? " revealed" : ""}`}
-              onClick={() => setActiveProject(p)}
+              onClick={() => {
+                setProjectTab("overview");
+                setActiveProject(p);
+              }}
               aria-haspopup="dialog"
               style={
                 {
@@ -449,41 +454,77 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
             </p>
             <h3 className="svc-modal-title">{activeProject.name}</h3>
 
-            <div className="project-summary">
-              {activeProject.summary.map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
+            <div className="cmap-tabs" role="tablist" aria-label="Project views">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={projectTab === "overview"}
+                className={`cmap-tab${projectTab === "overview" ? " is-active" : ""}`}
+                onClick={() => setProjectTab("overview")}
+              >
+                Overview
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={projectTab === "map"}
+                className={`cmap-tab${projectTab === "map" ? " is-active" : ""}`}
+                onClick={() => setProjectTab("map")}
+              >
+                Integration map
+              </button>
             </div>
 
-            <div className="meta-row" style={{ marginTop: "0.9rem" }}>
-              {activeProject.language && <span>{activeProject.language.name}</span>}
-              <span>
-                {activeProject.members.length}{" "}
-                {activeProject.members.length === 1 ? "repository" : "repositories"}
-              </span>
-              <span>last deploy {sinceLabel(activeProject.pushedAt, now)}</span>
-            </div>
+            {projectTab === "map" ? (
+              <ConnectionMap
+                members={activeProject.members}
+                now={now}
+                onSelect={(repo) => {
+                  setActiveProject(null);
+                  setActive(repo);
+                }}
+              />
+            ) : (
+              <>
+                <div className="project-summary">
+                  {activeProject.summary.map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
+                </div>
 
-            <div style={{ marginTop: "1.2rem" }}>
-              <p className="eyebrow">repositories in this project</p>
-              <ul className="svc-related">
-                {activeProject.members.map((repo) => (
-                  <li key={repo.name}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveProject(null);
-                        setActive(repo);
-                      }}
-                    >
-                      <span className={`dot s-${repo.status}`} aria-hidden="true" />
-                      <span className="svc-related-name">{repo.name}</span>
-                      <span className="svc-related-tags">{repo.primaryLanguage?.name ?? "—"}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                <div className="meta-row" style={{ marginTop: "0.9rem" }}>
+                  {activeProject.language && <span>{activeProject.language.name}</span>}
+                  <span>
+                    {activeProject.members.length}{" "}
+                    {activeProject.members.length === 1 ? "repository" : "repositories"}
+                  </span>
+                  <span>last deploy {sinceLabel(activeProject.pushedAt, now)}</span>
+                </div>
+
+                <div style={{ marginTop: "1.2rem" }}>
+                  <p className="eyebrow">repositories in this project</p>
+                  <ul className="svc-related">
+                    {activeProject.members.map((repo) => (
+                      <li key={repo.name}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveProject(null);
+                            setActive(repo);
+                          }}
+                        >
+                          <span className={`dot s-${repo.status}`} aria-hidden="true" />
+                          <span className="svc-related-name">{repo.name}</span>
+                          <span className="svc-related-tags">
+                            {repo.primaryLanguage?.name ?? "—"}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
