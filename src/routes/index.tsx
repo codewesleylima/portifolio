@@ -31,7 +31,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const LIVE_CACHE_KEY = "portfolio:live-repos:v1";
+const LIVE_CACHE_KEY = "portfolio:live-repos:v2";
+// A repository can be flipped to private at any moment; a session-long cache would keep
+// showing it. Five minutes matches the Worker's own TTL for the live read.
+const LIVE_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const LINKS = {
   github: "https://github.com/codewesleylima",
@@ -51,18 +54,28 @@ function Index() {
   useEffect(() => {
     let cancelled = false;
 
-    // Same-session revisits reuse the live read instead of paying for the round trip
-    // again. The baked SSR dataset still owns the first paint either way.
+    // Same-session revisits reuse a *fresh* live read instead of paying for the round
+    // trip again. Anything older than the TTL is discarded so a repository that just
+    // went private cannot survive in cache. The baked SSR dataset owns the first paint.
     const cached = (() => {
       try {
         const raw = sessionStorage.getItem(LIVE_CACHE_KEY);
-        return raw ? (JSON.parse(raw) as Portfolio) : null;
+        if (!raw) return null;
+        const entry = JSON.parse(raw) as { at?: number; payload?: Portfolio };
+        if (!entry?.at || Date.now() - entry.at > LIVE_CACHE_TTL_MS) {
+          sessionStorage.removeItem(LIVE_CACHE_KEY);
+          return null;
+        }
+        return entry.payload ?? null;
       } catch {
         return null;
       }
     })();
     if (cached?.repos?.length) {
-      setData(cached);
+      // Defense in depth: the Worker endpoint already excludes private repos at the
+      // source (github-live.ts hardcodes isPrivate: false), so this filter is a no-op
+      // today. It costs nothing and guards against a future server-side regression.
+      setData({ ...cached, repos: cached.repos.filter((r) => !r.isPrivate) });
       setIsLive(true);
       return;
     }
@@ -72,10 +85,14 @@ function Index() {
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
         .then((live: Portfolio) => {
           if (cancelled || !live.repos?.length) return;
-          setData(live);
+          const visible = { ...live, repos: live.repos.filter((r) => !r.isPrivate) };
+          setData(visible);
           setIsLive(true);
           try {
-            sessionStorage.setItem(LIVE_CACHE_KEY, JSON.stringify(live));
+            sessionStorage.setItem(
+              LIVE_CACHE_KEY,
+              JSON.stringify({ at: Date.now(), payload: visible }),
+            );
           } catch {
             /* storage full or blocked: the fetch still did its job */
           }
