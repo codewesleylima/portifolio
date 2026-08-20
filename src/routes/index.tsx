@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import AboutMe from "@/components/AboutMe";
 // The game is a canvas loop well below the fold: it loads as its own chunk so the
 // console above it paints without waiting for code nobody has scrolled to yet.
-const Arcade = lazy(() => import("@/components/Arcade"));
 import Mascot from "@/components/Mascot";
 import DeployLog from "@/components/DeployLog";
 import ServiceConsole from "@/components/ServiceConsole";
@@ -152,30 +151,6 @@ function Index() {
       </header>
 
       {/* SERVICES */}
-      {/* ARCADE */}
-      <section className="section" id="arcade">
-        <div className="shell">
-          <p className="eyebrow">00 // arcade</p>
-          <h2 className="section-title">{t("section.arcade")}</h2>
-          <p className="section-note">
-            A break from the dashboards: an 8-bit brawl against the incident. Arrows to move and
-            jump, A to punch, S to kick, D to guard — or use the on-screen pad.
-          </p>
-          <div style={{ marginTop: "1.8rem" }}>
-            <Suspense
-              fallback={
-                <div
-                  className="arcade-stage"
-                  style={{ aspectRatio: "720 / 300", width: "100%" }}
-                  aria-hidden="true"
-                />
-              }
-            >
-              <Arcade />
-            </Suspense>
-          </div>
-        </div>
-      </section>
 
       <section className="section" id="services">
         <div className="shell">

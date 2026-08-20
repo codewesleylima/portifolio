@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as ChannelRouteImport } from './routes/channel'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as ResumeRouteImport } from './routes/resume'
@@ -18,6 +19,11 @@ import { Route as StudiesRouteImport } from './routes/studies'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArcadeRoute = ArcadeRouteImport.update({
+  id: '/arcade',
+  path: '/arcade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChannelRoute = ChannelRouteImport.update({
@@ -43,6 +49,7 @@ const StudiesRoute = StudiesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/arcade': typeof ArcadeRoute
   '/channel': typeof ChannelRoute
   '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/arcade': typeof ArcadeRoute
   '/channel': typeof ChannelRoute
   '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/arcade': typeof ArcadeRoute
   '/channel': typeof ChannelRoute
   '/recommendations': typeof RecommendationsRoute
   '/resume': typeof ResumeRoute
@@ -65,15 +74,23 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/channel' | '/recommendations' | '/resume' | '/studies'
+  fullPaths:
+    '/' | '/arcade' | '/channel' | '/recommendations' | '/resume' | '/studies'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/channel' | '/recommendations' | '/resume' | '/studies'
+  to: '/' | '/arcade' | '/channel' | '/recommendations' | '/resume' | '/studies'
   id:
-    '__root__' | '/' | '/channel' | '/recommendations' | '/resume' | '/studies'
+    | '__root__'
+    | '/'
+    | '/arcade'
+    | '/channel'
+    | '/recommendations'
+    | '/resume'
+    | '/studies'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArcadeRoute: typeof ArcadeRoute
   ChannelRoute: typeof ChannelRoute
   RecommendationsRoute: typeof RecommendationsRoute
   ResumeRoute: typeof ResumeRoute
@@ -87,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arcade': {
+      id: '/arcade'
+      path: '/arcade'
+      fullPath: '/arcade'
+      preLoaderRoute: typeof ArcadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/channel': {
@@ -122,6 +146,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArcadeRoute: ArcadeRoute,
   ChannelRoute: ChannelRoute,
   RecommendationsRoute: RecommendationsRoute,
   ResumeRoute: ResumeRoute,

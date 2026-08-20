@@ -1057,13 +1057,50 @@ select:focus-visible {
 }
 
 .mascot {
-  /* Sits beside the display type, so it is sized against the name's cap
-     height rather than against the column it used to occupy. */
+  /* Now the door into /arcade, not decoration: pointer-events removed and the tag
+     changed from a div to a Link, so display has to be set explicitly (an <a> is
+     inline by default and would ignore the width/flex rules below without it). */
   position: relative;
+  display: block;
   width: clamp(110px, 15vw, 190px);
   flex: none;
   line-height: 0;
-  pointer-events: none;
+  cursor: pointer;
+}
+
+.mascot-hint {
+  position: absolute;
+  left: 50%;
+  bottom: -1.4rem;
+  transform: translateX(-50%) translateY(2px);
+  padding: 0.15rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--phosphor);
+  background: color-mix(in srgb, var(--void) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--phosphor) 45%, transparent);
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+.mascot:hover .mascot-hint,
+.mascot:focus-visible .mascot-hint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.mascot:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-hint {
+    transition: none;
+  }
 }
 
 .mascot-sprite,
@@ -3141,4 +3178,31 @@ select:focus-visible {
 }
 .svc-modal .cmap-tabs {
   margin-top: 0.9rem;
+}
+
+/* ---------- arcade page (isolated session behind the mascot) ---------- */
+.arcade-page {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+}
+.arcade-session {
+  margin-top: 1.8rem;
+}
+.arcade-enter {
+  margin-top: 1.8rem;
+  animation: arcade-fall 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes arcade-fall {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arcade-enter {
+    animation: none;
+  }
 }
