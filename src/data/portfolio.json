@@ -1,80 +1,14 @@
 {
-  "generatedAt": "2026-08-20T06:37:48.150Z",
+  "generatedAt": "2026-08-20T07:05:58.213Z",
   "profile": {
     "login": "codewesleylima",
     "name": "Wesley Lima",
     "bio": "Software Engineer at the leading bank in Latin America.",
     "avatarUrl": "https://avatars.githubusercontent.com/u/126538277?u=13ea1174c44983a168bfa46a4b01ffd4ae236c26&v=4",
     "followers": 8,
-    "publicRepos": 50
+    "publicRepos": 48
   },
   "repos": [
-    {
-      "name": "portifolio",
-      "description": null,
-      "url": "https://github.com/codewesleylima/portifolio",
-      "homepageUrl": null,
-      "primaryLanguage": {
-        "name": "TypeScript",
-        "color": "#3178c6"
-      },
-      "languages": [
-        {
-          "name": "TypeScript",
-          "percent": 81.1
-        },
-        {
-          "name": "CSS",
-          "percent": 17.3
-        },
-        {
-          "name": "JavaScript",
-          "percent": 1.6
-        }
-      ],
-      "topics": [],
-      "stars": 0,
-      "forks": 0,
-      "pushedAt": "2026-08-20T06:37:39Z",
-      "createdAt": "2026-08-16T05:08:10Z",
-      "isArchived": false,
-      "isFork": false,
-      "isPrivate": false,
-      "status": "healthy"
-    },
-    {
-      "name": "https-github-com-codewesleylima-portifolio",
-      "description": null,
-      "url": "https://github.com/codewesleylima/https-github-com-codewesleylima-portifolio",
-      "homepageUrl": null,
-      "primaryLanguage": {
-        "name": "TypeScript",
-        "color": "#3178c6"
-      },
-      "languages": [
-        {
-          "name": "TypeScript",
-          "percent": 81.8
-        },
-        {
-          "name": "CSS",
-          "percent": 16.6
-        },
-        {
-          "name": "JavaScript",
-          "percent": 1.6
-        }
-      ],
-      "topics": [],
-      "stars": 0,
-      "forks": 0,
-      "pushedAt": "2026-08-20T06:29:42Z",
-      "createdAt": "2026-08-17T02:57:10Z",
-      "isArchived": false,
-      "isFork": false,
-      "isPrivate": false,
-      "status": "healthy"
-    },
     {
       "name": "tech-challenge-oficina-mecanica",
       "description": "Projeto Tech Challenger para Pós Graduação em Arquitetura de Software - Projeto de Gestão de Oficina Mecanica",
