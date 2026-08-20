@@ -100,10 +100,18 @@ export default function ServiceConsole({ repos, now }: { repos: Repo[]; now: num
           io.disconnect();
         }
       },
-      { threshold: 0.08 },
+      // Reveal well before the grid enters the viewport: waiting for the tiles to be
+      // 8% visible made the section look broken while scrolling down to it.
+      { threshold: 0, rootMargin: "600px 0px 600px 0px" },
     );
     io.observe(node);
-    return () => io.disconnect();
+    // Safety net: if the observer never fires (odd scroll containers, restored
+    // scroll position), show the tiles anyway instead of leaving an empty block.
+    const fallback = window.setTimeout(() => setRevealed(true), 1200);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, []);
 
   useEffect(() => {
